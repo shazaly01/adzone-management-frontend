@@ -1,60 +1,192 @@
 <template>
-  <div class="space-y-4 text-right font-sans pb-24" dir="rtl">
-    <div class="flex justify-between items-center py-1 border-b border-surface-border/60">
-      <div>
-        <h1 class="text-base font-black text-text-primary flex items-center gap-2">
-          <span class="inline-block w-1.5 h-3 bg-amber-500 rounded-full"></span>
-          ورشة التنفيذ: ملاءمة وتعديل خامات التشغيل للفاتورة
-        </h1>
-        <p class="text-[11px] text-text-muted mt-0.5">
-          يمكنك تبديل الخامات الفعلية المستخدمة في الماكينات مع قفل المقاسات والأسعار المعتمدة
-          للعميل تلقائياً.
-        </p>
-      </div>
-    </div>
-
+  <div class="space-y-6 text-right font-sans pb-24" dir="rtl">
     <div
       v-if="technicianSaleStore.error"
-      class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-xs font-bold shadow-sm"
+      class="p-3 bg-rose-950/40 border border-rose-500/30 text-rose-400 rounded-lg text-xs font-bold shadow-sm"
     >
       {{ technicianSaleStore.error }}
     </div>
 
-    <div
-      class="p-3 bg-surface-ground/50 rounded-lg border border-surface-border grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-semibold text-text-secondary"
-    >
-      <div>
-        رقم المستند الرقمي:
-        <span class="font-mono font-bold text-text-primary"
-          >#{{ technicianSaleStore.currentSale?.id || route.params.id }}</span
-        >
+    <div class="bg-[#111827] rounded-xl border border-slate-800 shadow-md overflow-hidden">
+      <div class="px-4 py-2.5 bg-slate-900/80 border-b border-slate-800 flex items-center gap-2">
+        <span class="inline-block w-1 h-2 bg-slate-500 rounded-full"></span>
+        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-wider">
+          البيانات المرجعية للفاتورة
+        </h3>
       </div>
-      <div>
-        كود الفاتورة المنسق:
-        <span class="font-mono font-bold text-amber-500">{{
-          technicianSaleStore.currentSale?.invoice_number || '-'
-        }}</span>
-      </div>
-      <div>
-        حساب العميل المعني:
-        <span class="font-bold text-text-primary">{{
-          technicianSaleStore.currentSale?.customer_name || 'عميل معتمد'
-        }}</span>
-      </div>
-      <div>
-        مستودع السحب الفعلي:
-        <span class="font-bold text-text-primary">{{
-          technicianSaleStore.currentSale?.store_name || 'المخزن الرئيسي'
-        }}</span>
+      <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-semibold text-slate-400">
+        <div class="flex flex-col space-y-1">
+          <span class="text-[10px] text-slate-500">رقم المستند الرقمي:</span>
+          <span class="font-mono font-bold text-slate-200 text-sm"
+            >#{{ technicianSaleStore.currentSale?.id || route.params.id }}</span
+          >
+        </div>
+        <div class="flex flex-col space-y-1">
+          <span class="text-[10px] text-slate-500">كود الفاتورة المنسق:</span>
+          <span class="font-mono font-bold text-amber-500 text-sm shadow-amber-500/10">{{
+            technicianSaleStore.currentSale?.invoice_number || '-'
+          }}</span>
+        </div>
+        <div class="flex flex-col space-y-1">
+          <span class="text-[10px] text-slate-500">حساب العميل المعني:</span>
+          <span class="font-bold text-slate-200 text-sm">{{
+            technicianSaleStore.currentSale?.customer_name || 'عميل معتمد'
+          }}</span>
+        </div>
+        <div class="flex flex-col space-y-1">
+          <span class="text-[10px] text-slate-500">مستودع السحب الفعلي:</span>
+          <span class="font-bold text-slate-200 text-sm">{{
+            technicianSaleStore.currentSale?.store_name || 'المخزن الرئيسي'
+          }}</span>
+        </div>
       </div>
     </div>
 
-    <div class="bg-surface-card rounded-lg border border-surface-border overflow-hidden shadow-sm">
+    <div class="p-4 bg-[#1e293b]/40 rounded-xl border border-slate-700/60 space-y-4 shadow-md">
+      <div class="flex items-center gap-2 border-b border-slate-700/40 pb-2">
+        <svg class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+          />
+        </svg>
+        <h3 class="text-xs font-black text-slate-200">
+          تحديد الحالة التشغيلية الحالية للفاتورة بالورشة:
+        </h3>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <label
+          class="flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all bg-[#0f172a] select-none"
+          :class="
+            productionStatus === 'pending'
+              ? 'border-amber-500 bg-amber-500/10 ring-1 ring-amber-500/30'
+              : 'border-slate-800 hover:border-slate-700'
+          "
+        >
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_#f59e0b]"></span>
+            <span class="text-xs font-bold text-slate-200">قيد الانتظار</span>
+          </div>
+          <input type="radio" v-model="productionStatus" value="pending" class="sr-only" />
+          <span
+            class="w-4 h-4 rounded-full border flex items-center justify-center"
+            :class="
+              productionStatus === 'pending'
+                ? 'border-amber-500 text-amber-500'
+                : 'border-slate-700'
+            "
+          >
+            <span
+              v-if="productionStatus === 'pending'"
+              class="w-2 h-2 rounded-full bg-amber-500"
+            ></span>
+          </span>
+        </label>
+
+        <label
+          class="flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all bg-[#0f172a] select-none"
+          :class="
+            productionStatus === 'processing'
+              ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/30'
+              : 'border-slate-800 hover:border-slate-700'
+          "
+        >
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]"></span>
+            <span class="text-xs font-bold text-slate-200">جاري التشغيل</span>
+          </div>
+          <input type="radio" v-model="productionStatus" value="processing" class="sr-only" />
+          <span
+            class="w-4 h-4 rounded-full border flex items-center justify-center"
+            :class="
+              productionStatus === 'processing'
+                ? 'border-blue-500 text-blue-500'
+                : 'border-slate-700'
+            "
+          >
+            <span
+              v-if="productionStatus === 'processing'"
+              class="w-2 h-2 rounded-full bg-blue-500"
+            ></span>
+          </span>
+        </label>
+
+        <label
+          class="flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all bg-[#0f172a] select-none"
+          :class="
+            productionStatus === 'on_hold'
+              ? 'border-rose-500 bg-rose-500/10 ring-1 ring-rose-500/30'
+              : 'border-slate-800 hover:border-slate-700'
+          "
+        >
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_#ef4444]"></span>
+            <span class="text-xs font-bold text-slate-200">معلق / متوقف</span>
+          </div>
+          <input type="radio" v-model="productionStatus" value="on_hold" class="sr-only" />
+          <span
+            class="w-4 h-4 rounded-full border flex items-center justify-center"
+            :class="
+              productionStatus === 'on_hold' ? 'border-rose-500 text-rose-500' : 'border-slate-700'
+            "
+          >
+            <span
+              v-if="productionStatus === 'on_hold'"
+              class="w-2 h-2 rounded-full bg-rose-500"
+            ></span>
+          </span>
+        </label>
+
+        <label
+          class="flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all bg-[#0f172a] select-none"
+          :class="
+            productionStatus === 'completed'
+              ? 'border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-500/30'
+              : 'border-slate-800 hover:border-slate-700'
+          "
+        >
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
+            <span class="text-xs font-bold text-slate-200">تم التنفيذ بالكامل</span>
+          </div>
+          <input type="radio" v-model="productionStatus" value="completed" class="sr-only" />
+          <span
+            class="w-4 h-4 rounded-full border flex items-center justify-center"
+            :class="
+              productionStatus === 'completed'
+                ? 'border-emerald-500 text-emerald-500'
+                : 'border-slate-700'
+            "
+          >
+            <span
+              v-if="productionStatus === 'completed'"
+              class="w-2 h-2 rounded-full bg-emerald-500"
+            ></span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div class="bg-[#0f172a] rounded-xl border border-slate-800/80 overflow-hidden shadow-md">
+      <div class="px-4 py-2.5 bg-slate-900/60 border-b border-slate-800 flex items-center gap-2">
+        <svg class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+          />
+        </svg>
+        <h3 class="text-xs font-black text-slate-300">
+          أصناف الفاتورة وخامات ومقاسات التشغيل المطلوبة
+        </h3>
+      </div>
       <table class="w-full text-right border-collapse text-xs">
         <thead>
-          <tr
-            class="bg-surface-ground text-text-secondary border-b border-surface-border font-black"
-          >
+          <tr class="bg-[#111827] text-slate-400 border-b border-slate-800 font-black">
             <th class="p-3 w-1/12">رقم الصنف</th>
             <th class="p-3 w-3/12">اسم الصنف المعياري / خامة التشغيل المطبقة بالورشة</th>
             <th class="p-3 w-1/12 text-center">الطول</th>
@@ -64,20 +196,20 @@
             <th class="p-3 w-2/12 text-left">إجمالي السطر الثابت</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-surface-border/60">
+        <tbody class="divide-y divide-slate-800/60">
           <tr
             v-for="(row, index) in items"
             :key="row.id"
-            class="hover:bg-surface-ground/30 transition-all"
+            class="hover:bg-slate-900/40 transition-all"
           >
-            <td class="p-3 font-mono text-text-muted">PRD-{{ row.original_item_id }}</td>
+            <td class="p-3 font-mono text-slate-500">PRD-{{ row.original_item_id }}</td>
 
             <td class="p-2">
               <div v-if="row.is_dimensional" class="w-full">
                 <select
                   v-model="row.item_id"
                   style="color-scheme: dark"
-                  class="w-full p-1.5 bg-surface-ground text-text-primary border border-amber-500/40 focus:border-amber-500 rounded-md font-bold outline-none cursor-pointer text-right transition-all focus:ring-1 focus:ring-amber-500/20"
+                  class="w-full p-1.5 bg-[#111827] text-slate-200 border border-amber-500/30 focus:border-amber-500 rounded-md font-bold outline-none cursor-pointer text-right transition-all focus:ring-1 focus:ring-amber-500/20"
                 >
                   <option
                     v-for="dimensionalItem in dimensionalItemsOnly"
@@ -95,18 +227,18 @@
                 </p>
               </div>
 
-              <div v-else class="p-1 font-bold text-text-primary flex items-center gap-1.5">
-                <span class="inline-block w-1.5 h-1.5 bg-slate-500 rounded-full"></span>
+              <div class="p-1 font-bold text-slate-300 flex items-center gap-1.5" v-else>
+                <span class="inline-block w-1.5 h-1.5 bg-slate-600 rounded-full"></span>
                 {{ row.item_name }}
                 <span
-                  class="text-[10px] font-medium text-text-muted bg-surface-ground px-1.5 py-0.5 rounded border border-surface-border/40"
+                  class="text-[10px] font-medium text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800"
                 >
                   (صنف ثابت/خدمة مقفلة مالياً)
                 </span>
               </div>
             </td>
 
-            <td class="p-3 text-center font-mono font-bold text-text-muted">
+            <td class="p-3 text-center font-mono font-bold text-slate-400">
               {{
                 row.length !== null && row.length !== undefined
                   ? parseFloat(row.length).toFixed(2)
@@ -114,7 +246,7 @@
               }}
             </td>
 
-            <td class="p-3 text-center font-mono font-bold text-text-muted">
+            <td class="p-3 text-center font-mono font-bold text-slate-400">
               {{
                 row.width !== null && row.width !== undefined
                   ? parseFloat(row.width).toFixed(2)
@@ -122,15 +254,15 @@
               }}
             </td>
 
-            <td class="p-3 text-center font-mono font-bold text-text-primary">
+            <td class="p-3 text-center font-mono font-bold text-slate-200">
               {{ row.quantity }}
             </td>
 
-            <td class="p-3 text-center font-mono text-text-muted">
+            <td class="p-3 text-center font-mono text-slate-500">
               {{ parseFloat(row.unit_price).toFixed(2) }} د.ل
             </td>
 
-            <td class="p-3 text-left font-mono font-black text-text-primary">
+            <td class="p-3 text-left font-mono font-black text-slate-200">
               {{ parseFloat(row.grand_total).toFixed(2) }} د.ل
             </td>
           </tr>
@@ -139,12 +271,12 @@
     </div>
 
     <div
-      class="fixed bottom-0 right-0 left-0 bg-surface-card border-t border-surface-border p-3 shadow-[0_-4px_10px_rgba(0,0,0,0.06)] z-40 flex justify-between items-center px-6"
+      class="fixed bottom-0 right-0 left-0 bg-[#111827] border-t border-slate-800 p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.3)] z-40 flex justify-between items-center px-6"
     >
       <div class="text-xs text-amber-500 font-bold flex items-center gap-1">
         <span class="inline-block w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
-        تنبيه ورشة العمل: حفظ التعديلات سيعيد توجيه وتوازن المخازن والتكلفة فوراً، ولن يغير الفاتورة
-        النهائية المعتمدة للعميل.
+        تنبيه ورشة العمل: حفظ التعديلات سيعيد توجيه وتوازن المخازن والتكلفة فوراً بحسب الحالة
+        التشغيلية، ولن يغير الفاتورة النهائية للعميل.
       </div>
       <div class="flex items-center gap-3">
         <AppButton type="button" variant="secondary" size="sm" @click="handleCancel">
@@ -167,6 +299,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+useRouter
 import { useRoute, useRouter } from 'vue-router'
 import { useTechnicianSaleStore } from '@/stores/technicianSaleStore'
 import { useItemStore } from '@/stores/itemStore'
@@ -181,6 +314,7 @@ const technicianSaleStore = useTechnicianSaleStore()
 const itemStore = useItemStore()
 
 const items = ref([])
+const productionStatus = ref('pending') // تتبع القيمة المختارة لحالة الورشة
 
 // تصفية وعزل الأصناف التي تعتمد على الأبعاد فقط لتغذية خيارات التبديل الهندسي للفني
 const dimensionalItemsOnly = computed(() => {
@@ -198,8 +332,9 @@ onMounted(async () => {
     await technicianSaleStore.fetchSale(route.params.id)
 
     if (technicianSaleStore.currentSale) {
-      // استخراج معرف المخزن المربوط بالفاتورة الحالية
+      // استخراج معرف المخزن المربوط بالفاتورة الحالية والحالة المحفوظة مسبقاً بالسيرفر
       const currentStoreId = technicianSaleStore.currentSale.store_id
+      productionStatus.value = technicianSaleStore.currentSale.production_status || 'pending'
 
       // 2. شحن دليل الأصناف من النظام مع تمرير المخزن لحساب الأرصدة ومنع خطأ التحقق
       await itemStore.fetchItems(1, { is_active: 1, store_id: currentStoreId })
@@ -242,13 +377,16 @@ const handleSubmit = async () => {
   }
 
   try {
-    // إرسال البيانات المعتمدة لستور الفني المعزول
-    await technicianSaleStore.swapRawMaterials(route.params.id, { items: dimensionalItemsPayload })
-    toast.success('تمت معايرة الخامات وإعادة صياغة حركات المخزن والتكلفة بنجاح.')
+    // إرسال البيانات المعتمدة لستور الفني المعزول متضمنة الحالة الحرة الجديدة المختارة براديو بوتون
+    await technicianSaleStore.swapRawMaterials(route.params.id, {
+      production_status: productionStatus.value,
+      items: dimensionalItemsPayload,
+    })
+    toast.success('تمت معايرة الخامات وحفظ الحالة التشغيلية وتحديث التكلفة بنجاح.')
 
     // إعادة توجيه الفني إلى قائمة فواتير الورشة الخاصة به
     router.push({ name: 'TechnicianSalesList' })
-  } catch (err) {
+  } catch {
     toast.error('فشلت ملاءمة خامات الورشة، يرجى مراجعة صلاحيات التشغيل أو جرد الأرصدة.')
   }
 }
@@ -261,7 +399,7 @@ const handleCancel = () => {
 
 <style scoped>
 select option {
-  background-color: #1e293b !important;
+  background-color: #111827 !important;
   color: #f8fafc !important;
 }
 </style>

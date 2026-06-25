@@ -1,4 +1,3 @@
-<!---src\views\technician\TechnicianSalesList.vue-->
 <template>
   <div class="space-y-6">
     <div class="flex justify-between items-center mb-6 text-right" dir="rtl">
@@ -9,11 +8,12 @@
         </h1>
         <p class="text-xs text-text-secondary mt-1">
           استعراض ومتابعة الفواتير النهائية الجاهزة للتنفيذ ومعايرة خامات التشغيل والمقاسات المطبعية
-          فورا.
+          فوراً مع تحديث تلقائي لحظي.
         </p>
       </div>
     </div>
 
+    <!-- شريط الفلاتر والبحث السريع -->
     <div
       class="p-3 bg-surface-card rounded-lg border border-surface-border shadow-sm grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-right"
       dir="rtl"
@@ -64,6 +64,7 @@
       </div>
     </div>
 
+    <!-- جدول البيانات المطور -->
     <AppCard>
       <AppTable
         :headers="tableHeaders"
@@ -72,19 +73,34 @@
         :row-clickable="true"
         @row-click="goToTechnicianForm"
       >
+        <!-- خلايا مخصصة: تلوين كود المعرف الرقمي تبعاً للون الحالة للحصول على مظهر متناسق ومشع -->
         <template #cell-id="{ item }">
-          <span class="font-mono font-bold text-amber-500 bg-amber-500/5 px-2 py-1 rounded">
+          <span
+            class="font-mono font-bold px-2 py-1 rounded border transition-all"
+            :style="{
+              color: item.production_status_color,
+              backgroundColor: item.production_status_color + '0A',
+              borderColor: item.production_status_color + '20',
+            }"
+          >
             #{{ item.id }}
           </span>
         </template>
 
+        <!-- خلايا مخصصة: حقن شارة الحالة الملونة القادمة ديناميكياً من السيرفر مع التوهج الضوئي اللحظي -->
         <template #cell-invoice_info="{ item }">
           <div class="flex flex-col gap-1 py-1 text-right" dir="rtl">
             <div class="flex items-center gap-2">
               <span
-                class="px-2 py-0.5 text-[10px] font-black rounded border bg-amber-950/50 text-amber-400 border-amber-500/30"
+                class="px-2 py-0.5 text-[10px] font-black rounded border transition-all"
+                :style="{
+                  backgroundColor: item.production_status_color + '15',
+                  color: item.production_status_color,
+                  borderColor: item.production_status_color + '35',
+                  boxShadow: '0 0 8px ' + item.production_status_color + '18',
+                }"
               >
-                جاهزة للملاءمة المعايرية
+                {{ item.production_status_lbl }}
               </span>
               <span class="text-xs text-text-muted font-mono">{{
                 item.invoice_date.substr(0, 10)
@@ -111,8 +127,13 @@
           <div class="flex items-center justify-end" @click.stop>
             <button
               @click="goToTechnicianForm(item)"
-              class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-amber-500 hover:text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/20 rounded-lg transition-all"
-              title="معايرة وتحديث خامات التشغيل"
+              class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold hover:brightness-110 border rounded-lg transition-all"
+              :style="{
+                color: item.production_status_color,
+                backgroundColor: item.production_status_color + '0D',
+                borderColor: item.production_status_color + '30',
+              }"
+              title="معايرة وتحديث خامات التشغيل وتغيير الحالة"
             >
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -134,7 +155,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTechnicianSaleStore } from '@/stores/technicianSaleStore'
 import { useStoreStore } from '@/stores/storeStore'
@@ -159,6 +180,7 @@ const searchQuery = ref('')
 const storeFilter = ref('')
 const customerFilter = ref('')
 let searchTimeout = null
+let autoRefreshInterval = null // [إضافة برمجية]: متغير لحفظ مؤشر التحديث التلقائي الدوري
 
 // العناوين المعزولة والمجرّدة تماماً من الحسابات المالية الحساسة لصالح الفني
 const tableHeaders = computed(() => [
@@ -187,7 +209,40 @@ const handlePageChange = (page = 1) => {
   })
 }
 
+// [إضافة برمجية]: دالة التحديث الدوري الصامتة مع إطلاق إشعار ذكي فور رصد فاتورة جديدة تماماً في الورشة
+const runSilentAutoRefresh = async () => {
+  const filters = {
+    search: searchQuery.value,
+    store_id: storeFilter.value,
+    customer_id: customerFilter.value,
+  }
+
+  try {
+    // 1. التقاط معرف الفاتورة الأعلى الحالية قبل التحديث للمقارنة الرقمية العادلة
+    const previousTopInvoiceId = sales.value && sales.value.length > 0 ? sales.value[0].id : null
+
+    // 2. طلب جلب البيانات صامتاً من مخزن البيانات
+    await technicianSaleStore.fetchSales(pagination.value.current_page || 1, filters)
+
+    // 3. التقاط معرف الفاتورة الأعلى الحالية بعد التحديث
+    const currentTopInvoiceId = sales.value && sales.value.length > 0 ? sales.value[0].id : null
+
+    // 4. إذا كانت هناك فاتورة جديدة دخلت ورشة التنفيذ برقم معرف أكبر، أطلق تنبيهاً فورياً للعامل
+    if (previousTopInvoiceId && currentTopInvoiceId && currentTopInvoiceId > previousTopInvoiceId) {
+      toast.info('🔔 تنبيه: تم استقبال فاتورة إنتاج جديدة قيد الانتظار بالورشة!', {
+        timeout: 6000,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      })
+    }
+  } catch (err) {
+    console.error('Auto-refresh background process failed:', err)
+  }
+}
+
 onMounted(async () => {
+  // شحن البيانات لأول مرة عند تشغيل الشاشة
   handlePageChange(1)
 
   // شحن قوائم التصفية المساعدة
@@ -195,6 +250,16 @@ onMounted(async () => {
     storeStore.fetchStores(1, { is_active: 1 }),
     customerStore.fetchCustomers(1, { is_active: 1 }),
   ])
+
+  // [إضافة برمجية]: تشغيل آلية الـ Polling الدوري لتحديث الشاشة تلقائياً كل 15 ثانية (15000 ملي ثانية)
+  autoRefreshInterval = setInterval(runSilentAutoRefresh, 15000)
+})
+
+onUnmounted(() => {
+  // [إضافة برمجية]: تدمير وتنظيف المؤقت الدوري نهائياً عند مغادرة الصفحة حماية لأداء المتصفح وسرعته
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval)
+  }
 })
 
 const goToTechnicianForm = (sale) => {
