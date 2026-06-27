@@ -81,30 +81,60 @@
 
           <template #cell-length="{ row }">
             <div class="w-full flex justify-center items-center">
-              <input
-                v-if="row.is_dimensional"
-                type="number"
-                step="0.01"
-                min="0"
-                v-model.number="row.length"
-                class="w-full p-1 bg-[#16171b] border border-[#3e414c] hover:border-gray-500 focus:border-[#e05e2b] rounded transition-all text-xs text-center font-mono text-white font-bold outline-none focus:ring-1 focus:ring-[#e05e2b]/30"
-                placeholder="0.00"
-              />
+              <div v-if="row.is_dimensional" class="flex items-center gap-1 w-full">
+                <input
+                  type="text"
+                  step="0.01"
+                  min="0"
+                  v-model.number="row.length"
+                  class="w-full p-1 bg-[#16171b] border border-[#3e414c] hover:border-gray-500 focus:border-[#e05e2b] rounded transition-all text-xs text-center font-mono text-white font-bold outline-none focus:ring-1 focus:ring-[#e05e2b]/30"
+                  placeholder="0.00"
+                />
+                <select
+                  v-model="row.dimension_unit"
+                  class="bg-[#16171b] text-white border border-[#3e414c] rounded text-xs p-1 flex-shrink-0"
+                  style="width: 45px"
+                >
+                  <option value="m">م</option>
+                  <option value="cm">سم</option>
+                </select>
+                <span
+                  v-if="row.length > 50 && row.dimension_unit === 'm'"
+                  class="text-amber-400 text-[9px] font-bold flex-shrink-0"
+                >
+                  تأكد من الوحدة!
+                </span>
+              </div>
               <span v-else class="text-gray-500 font-bold text-center block w-full">-</span>
             </div>
           </template>
 
           <template #cell-width="{ row }">
             <div class="w-full flex justify-center items-center">
-              <input
-                v-if="row.is_dimensional"
-                type="number"
-                step="0.01"
-                min="0"
-                v-model.number="row.width"
-                class="w-full p-1 bg-[#16171b] border border-[#3e414c] hover:border-gray-500 focus:border-[#e05e2b] rounded transition-all text-xs text-center font-mono text-white font-bold outline-none focus:ring-1 focus:ring-[#e05e2b]/30"
-                placeholder="0.00"
-              />
+              <div v-if="row.is_dimensional" class="flex items-center gap-1 w-full">
+                <input
+                  type="text"
+                  step="0.01"
+                  min="0"
+                  v-model.number="row.width"
+                  class="w-full p-1 bg-[#16171b] border border-[#3e414c] hover:border-gray-500 focus:border-[#e05e2b] rounded transition-all text-xs text-center font-mono text-white font-bold outline-none focus:ring-1 focus:ring-[#e05e2b]/30"
+                  placeholder="0.00"
+                />
+                <select
+                  v-model="row.dimension_unit"
+                  class="bg-[#16171b] text-white border border-[#3e414c] rounded text-xs p-1 flex-shrink-0"
+                  style="width: 45px"
+                >
+                  <option value="m">م</option>
+                  <option value="cm">سم</option>
+                </select>
+                <span
+                  v-if="row.width > 50 && row.dimension_unit === 'm'"
+                  class="text-amber-400 text-[9px] font-bold flex-shrink-0"
+                >
+                  تأكد من الوحدة!
+                </span>
+              </div>
               <span v-else class="text-gray-500 font-bold text-center block w-full">-</span>
             </div>
           </template>
@@ -116,6 +146,31 @@
                 v-model="row.is_designed"
                 :disabled="!row.is_dimensional"
                 class="w-4 h-4 rounded text-[#e05e2b] bg-[#16171b] border-[#3e414c] focus:ring-[#e05e2b] focus:ring-opacity-25 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+              />
+            </div>
+          </template>
+
+          <template #cell-unit_price="{ row }">
+            <div class="w-full flex justify-center items-center">
+              <input
+                type="text"
+                inputmode="decimal"
+                :value="formatNumber(row.unit_price)"
+                @input="row.unit_price = unformatNumber($event.target.value)"
+                class="w-full p-1 bg-[#16171b] border border-[#3e414c] hover:border-gray-500 focus:border-[#e05e2b] rounded transition-all text-xs text-center font-mono text-white font-bold outline-none focus:ring-1 focus:ring-[#e05e2b]/30"
+                placeholder="0"
+              />
+            </div>
+          </template>
+
+          <template #cell-grand_total="{ row }">
+            <div class="w-full flex justify-center items-center">
+              <input
+                type="text"
+                readonly
+                :value="formatNumber(row.grand_total)"
+                class="w-full p-1 bg-[#16171b] border border-[#3e414c] rounded text-xs text-center font-mono text-white font-bold opacity-90 cursor-default"
+                placeholder="0"
               />
             </div>
           </template>
@@ -248,21 +303,11 @@ const searchableItems = computed(() => {
 })
 
 const detailSchema = [
+  // أعمدة مخفية (بدون label)
   {
-    key: 'item_id_display',
-    label: 'رقم الصنف',
-    widthClass: 'w-1/12',
-    readonly: true,
-    type: 'text',
-    extractFromItem: (item) => (item.id ? `PRD-${item.id}` : ''),
-  },
-  {
-    key: 'item_name',
-    label: 'اسم الصنف التجاري المعتمد',
-    widthClass: 'w-1/4',
-    readonly: true,
-    type: 'text',
-    extractFromItem: (item) => item.name || '',
+    key: 'dimension_unit',
+    defaultValue: 'm',
+    extractFromItem: () => 'm',
   },
   {
     key: 'item_id',
@@ -278,23 +323,114 @@ const detailSchema = [
     extractFromItem: (item) => item.units || [],
   },
   {
-    key: 'item_unit_id',
-    label: 'وحدة التعبئة',
-    slot: 'cell-item_unit_id',
-    widthClass: 'w-1/6',
-    type: 'text',
-    extractFromItem: (item) => item.units?.[0]?.id || '',
-  },
-  {
     key: 'base_stock',
     extractFromItem: (item) => parseFloat(item.current_stock) || 0,
+  },
+
+  // أعمدة مرئية بالترتيب الجديد
+  {
+    key: 'item_id_display',
+    label: 'رقم الصنف',
+    widthClass: 'w-[6%]',
+    readonly: true,
+    type: 'text',
+    extractFromItem: (item) => (item.id ? `PRD-${item.id}` : ''),
+  },
+  {
+    key: 'item_name',
+    label: 'اسم الصنف التجاري المعتمد',
+    widthClass: 'w-[20%]',
+    readonly: true,
+    type: 'text',
+    extractFromItem: (item) => item.name || '',
+  },
+  {
+    key: 'length',
+    label: 'الطول',
+    slot: 'cell-length',
+    type: 'number',
+    defaultValue: null,
+    widthClass: 'w-[12%]',
+  },
+  {
+    key: 'width',
+    label: 'العرض',
+    slot: 'cell-width',
+    type: 'number',
+    defaultValue: null,
+    widthClass: 'w-[12%]',
+  },
+  {
+    key: 'total_sqm',
+    label: 'إجمالي متر مربع',
+    type: 'calculated',
+    readonly: true,
+    widthClass: 'w-[6%]',
+    formula: (row) => {
+      if (!row.is_dimensional) return null
+      let l = parseFloat(row.length) || 0
+      let w = parseFloat(row.width) || 0
+      const q = parseFloat(row.quantity) || 0
+      if (row.dimension_unit === 'cm') {
+        l = parseFloat((l / 100).toFixed(6))
+        w = parseFloat((w / 100).toFixed(6))
+      }
+      return parseFloat((l * w * q).toFixed(4))
+    },
+  },
+  {
+    key: 'quantity',
+    label: 'العدد',
+    type: 'number',
+    defaultValue: 1,
+    widthClass: 'w-[6%]',
+  },
+  {
+    key: 'unit_price',
+    label: 'سعر الوحدة',
+    type: 'number',
+    defaultValue: 0,
+    widthClass: 'w-[8%]',
+    extractFromItem: (item) => item.units?.[0]?.price || 0,
+    slot: 'cell-unit_price',
+  },
+  {
+    key: 'grand_total',
+    label: 'الاجمالى',
+    type: 'calculated',
+    readonly: true,
+    summary: true,
+    widthClass: 'w-[13%]',
+    formula: (row) => {
+      const q = parseFloat(row.quantity) || 0
+      const p = parseFloat(row.unit_price) || 0
+      if (row.is_dimensional) {
+        let l = parseFloat(row.length) || 0
+        let w = parseFloat(row.width) || 0
+        if (row.dimension_unit === 'cm') {
+          l = parseFloat((l / 100).toFixed(6))
+          w = parseFloat((w / 100).toFixed(6))
+        }
+        return parseFloat((l * w * q * p).toFixed(4))
+      }
+      return parseFloat((q * p).toFixed(4))
+    },
+    slot: 'cell-grand_total',
+  },
+  {
+    key: 'item_unit_id',
+    label: 'وحدة البيع',
+    slot: 'cell-item_unit_id',
+    widthClass: 'w-[6%]',
+    type: 'text',
+    extractFromItem: (item) => item.units?.[0]?.id || '',
   },
   {
     key: 'available_stock',
     label: 'المخزون المتاح',
     type: 'calculated',
     readonly: true,
-    widthClass: 'w-1/12',
+    widthClass: 'w-[6%]',
     formula: (row) => {
       if (row.base_stock === null || row.base_stock === undefined) return 0
       const matchedUnit = row.available_units?.find((u) => u.id === row.item_unit_id)
@@ -303,60 +439,12 @@ const detailSchema = [
     },
   },
   {
-    key: 'length',
-    label: 'الطول',
-    slot: 'cell-length',
-    type: 'number',
-    defaultValue: null,
-    widthClass: 'w-1/12',
-  },
-  {
-    key: 'width',
-    label: 'العرض',
-    slot: 'cell-width',
-    type: 'number',
-    defaultValue: null,
-    widthClass: 'w-1/12',
-  },
-  {
     key: 'is_designed',
-    label: 'تصميم [✓]', // [إضافة بصريّة]: عمود التحكم بعلامة الصح لتأكيد خضوع السطر للعمولة المالية
+    label: 'تصميم [✓]',
     slot: 'cell-is_designed',
     type: 'boolean',
     defaultValue: false,
-    widthClass: 'w-1/12',
-  },
-  {
-    key: 'quantity',
-    label: 'العدد',
-    type: 'number',
-    defaultValue: 1,
-    widthClass: 'w-1/12',
-  },
-  {
-    key: 'unit_price',
-    label: 'سعر الوحدة',
-    type: 'number',
-    defaultValue: 0,
-    widthClass: 'w-1/12',
-    extractFromItem: (item) => item.units?.[0]?.price || 0,
-  },
-  {
-    key: 'grand_total',
-    label: 'الاجمالى',
-    type: 'calculated',
-    readonly: true,
-    summary: true,
-    formula: (row) => {
-      const q = parseFloat(row.quantity) || 0
-      const p = parseFloat(row.unit_price) || 0
-      if (row.is_dimensional) {
-        const l = parseFloat(row.length) || 0
-        const w = parseFloat(row.width) || 0
-        return parseFloat((l * w * q * p).toFixed(4))
-      }
-      return parseFloat((q * p).toFixed(4))
-    },
+    widthClass: 'w-[6%]',
   },
 ]
 
@@ -488,7 +576,8 @@ onMounted(async () => {
           is_dimensional: !!it.is_dimensional,
           length: it.length,
           width: it.width,
-          is_designed: !!it.is_designed, // [إعادة شحن]: تحميل حالة علامة الصح للسطر عند التعديل من السيرفر
+          dimension_unit: 'm', // [إضافة]: ضبط وحدة الأبعاد الافتراضية عند التعديل
+          is_designed: !!it.is_designed,
           quantity: it.quantity,
           unit_price: it.unit_price,
           grand_total: it.grand_total,
@@ -516,18 +605,29 @@ onMounted(async () => {
 const handleSubmit = async () => {
   const dynamicItemsPayload = items.value
     .filter((row) => row.item_id && row.item_unit_id)
-    .map((row) => ({
-      item_id: row.item_id,
-      item_unit_id: row.item_unit_id,
-      length: row.is_dimensional ? parseFloat(row.length) || null : null,
-      width: row.is_dimensional ? parseFloat(row.width) || null : null,
-      is_designed: !!row.is_designed, // [إرسال]: تمرير خيار علامة صح التصميم للباك إند
-      quantity: parseFloat(row.quantity) || 0,
-      unit_price: parseFloat(row.unit_price) || 0,
-      subtotal: parseFloat(row.grand_total) || 0,
-      discount_amount: 0,
-      grand_total: parseFloat(row.grand_total) || 0,
-    }))
+    .map((row) => {
+      let lengthValue = parseFloat(row.length) || null
+      let widthValue = parseFloat(row.width) || null
+
+      // تحويل الأبعاد إلى متر إذا كانت الوحدة المختارة هي السنتيمتر
+      if (row.is_dimensional && row.dimension_unit === 'cm') {
+        if (lengthValue !== null) lengthValue = parseFloat((lengthValue / 100).toFixed(6))
+        if (widthValue !== null) widthValue = parseFloat((widthValue / 100).toFixed(6))
+      }
+
+      return {
+        item_id: row.item_id,
+        item_unit_id: row.item_unit_id,
+        length: row.is_dimensional ? lengthValue : null,
+        width: row.is_dimensional ? widthValue : null,
+        is_designed: !!row.is_designed,
+        quantity: parseFloat(row.quantity) || 0,
+        unit_price: parseFloat(row.unit_price) || 0,
+        subtotal: parseFloat(row.grand_total) || 0,
+        discount_amount: 0,
+        grand_total: parseFloat(row.grand_total) || 0,
+      }
+    })
 
   const finalPayload = {
     ...form.value,
@@ -552,5 +652,26 @@ const handleSubmit = async () => {
 
 const handleCancel = () => {
   router.push('/app/sales')
+}
+
+// دوال تنسيق الأرقام بفواصل الآلاف (بدون رمز العملة)
+const formatNumber = (value) => {
+  if (value === null || value === undefined || value === '') return ''
+  const num = Number(value)
+  if (isNaN(num)) return ''
+  const options = {
+    style: 'decimal',
+    maximumFractionDigits: 2,
+    minimumFractionDigits: num % 1 === 0 ? 0 : 2,
+  }
+  return new Intl.NumberFormat('en-US', options).format(num)
+}
+
+const unformatNumber = (text) => {
+  if (!text) return 0
+  // إزالة كل شيء ما عدا الأرقام والنقطة
+  const cleaned = text.replace(/[^0-9.]/g, '')
+  const num = parseFloat(cleaned)
+  return isNaN(num) ? 0 : num
 }
 </script>

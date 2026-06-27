@@ -1,3 +1,4 @@
+<!--src\views\sales\SalePrint.vue--->
 <template>
   <div
     class="print-container min-h-screen bg-slate-50 text-slate-800 p-2 r2l relative flex flex-col justify-between"
@@ -151,6 +152,7 @@
                   <th class="p-1 text-center">الوحدة</th>
                   <th class="p-1 text-center">الطول</th>
                   <th class="p-1 text-center">العرض</th>
+                  <th class="p-1 text-center">متر مربع</th>
                   <th class="p-1 text-center">العدد</th>
                   <th class="p-1 text-left">سعر الوحدة</th>
                 </tr>
@@ -166,6 +168,13 @@
                   <td class="p-1 text-center">{{ item.unit_name || '-' }}</td>
                   <td class="p-1 text-center font-mono">{{ item.length ?? '-' }}</td>
                   <td class="p-1 text-center font-mono">{{ item.width ?? '-' }}</td>
+                  <td class="p-1 text-center font-mono">
+                    {{
+                      item.length && item.width
+                        ? (item.length * item.width * item.quantity).toFixed(4)
+                        : '-'
+                    }}
+                  </td>
                   <td class="p-1 text-center font-bold">{{ item.quantity }}</td>
                   <td class="p-1 text-left font-mono">{{ formatCurrency(item.unit_price) }}</td>
                 </tr>
@@ -331,39 +340,42 @@
         </div>
 
         <!-- جدول الأصناف (نفسه) -->
-        <div class="px-3 flex-1">
-          <div class="border border-slate-300 rounded-lg overflow-hidden">
-            <table class="w-full text-right border-collapse text-[8px]">
-              <thead>
-                <tr class="bg-slate-100 text-slate-800 font-black border-b border-slate-300">
-                  <th class="p-1 text-center w-8">#</th>
-                  <th class="p-1 text-right">الصنف</th>
-                  <th class="p-1 text-center">الوحدة</th>
-                  <th class="p-1 text-center">الطول</th>
-                  <th class="p-1 text-center">العرض</th>
-                  <th class="p-1 text-center">العدد</th>
-                  <th class="p-1 text-left">سعر الوحدة</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(item, index) in currentSale.items"
-                  :key="item.id"
-                  class="border-b border-slate-200"
-                >
-                  <td class="p-1 text-center font-mono text-slate-500">{{ index + 1 }}</td>
-                  <td class="p-1 font-bold text-slate-900">{{ item.item_name }}</td>
-                  <td class="p-1 text-center">{{ item.unit_name || '-' }}</td>
-                  <td class="p-1 text-center font-mono">{{ item.length ?? '-' }}</td>
-                  <td class="p-1 text-center font-mono">{{ item.width ?? '-' }}</td>
-                  <td class="p-1 text-center font-bold">{{ item.quantity }}</td>
-                  <td class="p-1 text-left font-mono">{{ formatCurrency(item.unit_price) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
+        <table class="w-full text-right border-collapse text-[8px]">
+          <thead>
+            <tr class="bg-slate-100 text-slate-800 font-black border-b border-slate-300">
+              <th class="p-1 text-center w-8">#</th>
+              <th class="p-1 text-right">الصنف</th>
+              <th class="p-1 text-center">الوحدة</th>
+              <th class="p-1 text-center">الطول</th>
+              <th class="p-1 text-center">العرض</th>
+              <th class="p-1 text-center">متر مربع</th>
+              <th class="p-1 text-center">العدد</th>
+              <th class="p-1 text-left">سعر الوحدة</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(item, index) in currentSale.items"
+              :key="item.id"
+              class="border-b border-slate-200"
+            >
+              <td class="p-1 text-center font-mono text-slate-500">{{ index + 1 }}</td>
+              <td class="p-1 font-bold text-slate-900">{{ item.item_name }}</td>
+              <td class="p-1 text-center">{{ item.unit_name || '-' }}</td>
+              <td class="p-1 text-center font-mono">{{ item.length ?? '-' }}</td>
+              <td class="p-1 text-center font-mono">{{ item.width ?? '-' }}</td>
+              <td class="p-1 text-center font-mono">
+                {{
+                  item.length && item.width
+                    ? (item.length * item.width * item.quantity).toFixed(4)
+                    : '-'
+                }}
+              </td>
+              <td class="p-1 text-center font-bold">{{ item.quantity }}</td>
+              <td class="p-1 text-left font-mono">{{ formatCurrency(item.unit_price) }}</td>
+            </tr>
+          </tbody>
+        </table>
         <!-- الإجماليات (نفسها) -->
         <div class="px-3 py-1">
           <div
