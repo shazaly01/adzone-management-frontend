@@ -1,3 +1,4 @@
+<!--src\views\sales\components\SaleHeader.vue--->
 <template>
   <div
     class="p-5 bg-[#23252e] rounded-xl border-2 border-[#5d6170] shadow-2xl space-y-4 text-right font-sans"

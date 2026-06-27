@@ -1,13 +1,14 @@
-<!--src\views\sales\SalePrint.vue--->
 <template>
   <div
-    class="print-container min-h-screen bg-slate-50 text-slate-800 p-6 r2l relative flex flex-col justify-between"
+    class="print-container min-h-screen bg-slate-50 text-slate-800 p-2 r2l relative flex flex-col justify-between"
     dir="rtl"
   >
+    <!-- خلفية زخرفية خفيفة (تظهر فقط على الشاشة) -->
     <div
       class="absolute top-0 right-0 w-80 h-80 bg-orange-500/5 rounded-full blur-3xl no-print"
     ></div>
 
+    <!-- حالة التحميل -->
     <div v-if="loading" class="flex flex-col items-center justify-center flex-1 no-print">
       <div class="relative w-16 h-16">
         <div
@@ -18,10 +19,11 @@
         ></div>
       </div>
       <p class="text-sm text-slate-600 mt-6 font-bold tracking-wide animate-pulse">
-        جاري تحضير مستند الطباعة الإبداعي...
+        جاري تحضير مستند الطباعة...
       </p>
     </div>
 
+    <!-- حالة الخطأ -->
     <div
       v-else-if="error || !currentSale"
       class="p-8 text-center max-w-md mx-auto my-20 bg-white rounded-2xl shadow-lg border border-slate-200 no-print"
@@ -42,305 +44,382 @@
       </button>
     </div>
 
+    <!-- الفاتورة -->
     <div
       v-else
-      class="invoice-box max-w-[21cm] mx-auto bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden relative flex flex-col justify-between flex-1 w-full"
+      class="invoice-box max-w-[21cm] mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden relative flex flex-col justify-between flex-1 w-full"
     >
-      <div class="flex-1 flex flex-col">
-        <div class="w-full flex h-3.5 overflow-hidden">
+      <!-- ============================================================ -->
+      <!--                     نسخة العميل (النصف العلوي)                 -->
+      <!-- ============================================================ -->
+      <div class="customer-copy flex-1 flex flex-col" style="height: 50%; min-height: 50%">
+        <!-- الشريط العلوي الملون -->
+        <div class="w-full flex h-2 overflow-hidden">
           <div class="w-8/12 bg-gradient-to-r from-orange-600 to-orange-500"></div>
           <div class="w-1/12 bg-amber-400"></div>
           <div class="w-3/12 bg-slate-700"></div>
         </div>
 
-        <div class="p-8 flex justify-between items-center gap-6 border-b border-slate-200 relative">
-          <div class="flex items-center gap-5">
+        <!-- رأس الفاتورة -->
+        <div class="px-3 py-2 flex justify-between items-center gap-3 border-b border-slate-200">
+          <div class="flex items-center gap-3">
             <div
-              class="w-20 h-20 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-200 shadow-inner p-2 relative logo-container"
+              class="w-12 h-12 bg-slate-50 rounded-lg flex items-center justify-center border border-slate-200 p-1"
             >
-              <div
-                class="w-24 h-24 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-200 shadow-inner p-1 relative logo-container"
+              <img
+                src="/MainLogo2.png"
+                alt="شعار الشركة"
+                class="w-full h-full object-contain rounded"
+                onerror="this.style.display='none'"
+              />
+            </div>
+            <div class="text-right">
+              <h2 class="text-sm font-black text-slate-900">فيوتشر للدعاية</h2>
+              <p class="text-[8px] text-orange-600 font-bold">لوكالة الإبداعية</p>
+            </div>
+          </div>
+
+          <div class="text-right space-y-0.5">
+            <div
+              class="bg-gradient-to-l from-slate-50 to-orange-50/50 px-2 py-0.5 rounded border-r-2 border-orange-500"
+            >
+              <span class="text-[10px] font-black text-orange-600">{{
+                currentSale.invoice_type_lbl
+              }}</span>
+            </div>
+            <div class="flex items-center gap-3 text-[9px]">
+              <span class="font-bold text-slate-500">رقم:</span>
+              <span class="font-mono font-black bg-slate-100 px-1.5 py-0.5 rounded">{{
+                currentSale.invoice_number
+              }}</span>
+              <span class="font-bold text-slate-500">التاريخ:</span>
+              <span class="font-mono font-bold">{{
+                formatDateOnly(currentSale.invoice_date)
+              }}</span>
+            </div>
+            <div class="flex items-center gap-3 text-[9px]">
+              <span class="font-bold text-slate-500">نوع البيع:</span>
+              <span
+                class="font-mono font-bold px-2 py-0.5 rounded-full border text-[8px]"
+                :class="
+                  currentSale.sale_type === 'indoor'
+                    ? 'text-emerald-700 border-emerald-300 bg-emerald-50'
+                    : 'text-amber-700 border-amber-300 bg-amber-50'
+                "
               >
-                <img
-                  src="/MainLogo2.png"
-                  alt="شعار الشركة"
-                  class="w-full h-full object-contain rounded-lg error-fallback z-10"
-                  onerror="this.style.display='none'; this.nextSibling.style.display='flex';"
-                />
-                <div
-                  class="hidden absolute text-[10px] font-black text-slate-400 items-center justify-center"
-                >
-                  LOGO
-                </div>
-              </div>
-            </div>
-
-            <div class="text-right space-y-1">
-              <h2 class="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                فيوتشر للدعاية والاعلان
-              </h2>
-              <p class="text-xs text-orange-600 font-bold tracking-widest uppercase">
-                لوكالة الإبداعية للدعاية والإعلان والحلول الرقمية
-              </p>
-            </div>
-          </div>
-
-          <div class="text-right space-y-2 min-w-[240px]">
-            <div
-              class="bg-gradient-to-l from-slate-50 to-orange-50/50 text-right px-4 py-2 rounded-xl border-r-4 border-orange-500 shadow-sm"
-            >
-              <h1 class="text-base font-black tracking-wide text-orange-600">
-                {{ currentSale.invoice_type_lbl }}
-              </h1>
-            </div>
-            <div class="px-2 space-y-1 text-xs text-slate-600 font-medium">
-              <p class="flex justify-between items-center" dir="rtl">
-                <span>رقم الفاتورة:</span>
-                <span
-                  class="font-mono text-slate-900 font-black bg-slate-100 px-2 py-0.5 rounded border border-slate-200"
-                  >{{ currentSale.invoice_number }}</span
-                >
-              </p>
-              <p class="flex justify-between items-center" dir="rtl">
-                <span>نوع البيع:</span>
-                <span
-                  class="font-mono font-bold px-2 py-0.5 rounded-full border text-xs"
-                  :class="
-                    currentSale.sale_type === 'indoor'
-                      ? 'text-emerald-700 border-emerald-300 bg-emerald-50'
-                      : 'text-amber-700 border-amber-300 bg-amber-50'
-                  "
-                >
-                  {{ currentSale.sale_type === 'indoor' ? 'داخلي' : 'خارجي' }}
-                </span>
-              </p>
-              <p class="flex justify-between items-center" dir="rtl">
-                <span>تاريخ الإصدار:</span>
-                <span class="font-mono font-bold text-slate-800">{{
-                  formatDateOnly(currentSale.invoice_date)
-                }}</span>
-              </p>
+                {{ currentSale.sale_type === 'indoor' ? 'داخلي' : 'خارجي' }}
+              </span>
+              <span class="font-bold text-slate-500">طريقة الدفع:</span>
+              <span class="font-bold text-slate-800">{{ currentSale.payment_type_lbl }}</span>
             </div>
           </div>
         </div>
 
-        <div
-          class="grid grid-cols-2 gap-6 text-xs bg-slate-50 rounded-xl p-4 border border-slate-200 relative"
-        >
-          <div class="absolute top-0 bottom-0 right-0 w-1 bg-orange-500 rounded-r"></div>
-
-          <!-- العمود الأيمن: معلومات العميل -->
-          <div class="space-y-2 text-right border-l border-slate-200 pl-4">
-            <span class="text-[10px] font-bold text-orange-600 uppercase tracking-wider block"
-              >العميل والمستلم المعتمد</span
-            >
-            <p class="font-black text-slate-900 text-base">
-              {{ currentSale.customer_name || '-' }}
-            </p>
-            <!-- اسم العميل النصي (إن وجد) -->
-            <p v-if="currentSale.customer_name_text" class="text-[11px] text-orange-600 font-bold">
-              {{ currentSale.customer_name_text }}
-            </p>
-          </div>
-
-          <!-- العمود الأيسر: التفاصيل المالية -->
-          <div class="space-y-2 text-right pr-4 flex flex-col justify-center">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block"
-              >تفاصيل التدقيق والاعتماد المالي</span
-            >
-            <div class="space-y-1">
-              <p class="font-bold text-slate-800 flex items-center gap-2">
-                <span>طريقة الدفع:</span>
-                <span
-                  class="px-2.5 py-0.5 bg-slate-800 text-white text-[10px] rounded-md font-black shadow-sm"
-                  >{{ currentSale.payment_type_lbl }}</span
-                >
+        <!-- معلومات العميل -->
+        <div class="px-3 py-1.5">
+          <div
+            class="grid grid-cols-2 gap-2 text-[9px] bg-slate-50 rounded-lg p-2 border border-slate-200"
+          >
+            <div class="text-right">
+              <span class="text-[8px] font-bold text-orange-600">العميل:</span>
+              <p class="font-black text-slate-900 text-xs">
+                {{ currentSale.customer_name || '-' }}
               </p>
-              <p class="text-[11px] text-slate-500">
-                الموظف المسؤول:
-                <span class="text-slate-800 font-bold">{{ currentSale.user_name || '-' }}</span>
+              <p v-if="currentSale.customer_name_text" class="text-orange-600 font-bold text-[9px]">
+                {{ currentSale.customer_name_text }}
               </p>
+              <p class="text-slate-500 text-[8px]">الموظف: {{ currentSale.user_name || '-' }}</p>
+            </div>
+            <div class="text-left">
+              <span class="text-[8px] font-bold text-slate-400">ملاحظات:</span>
+              <p class="text-[9px] text-slate-600 truncate" v-if="currentSale.notes">
+                {{ currentSale.notes }}
+              </p>
+              <p class="text-[9px] text-slate-400 italic" v-else>لا توجد ملاحظات</p>
             </div>
           </div>
         </div>
-        <div class="px-8 pb-4 flex-1">
-          <div class="border border-slate-300 rounded-xl overflow-hidden shadow-sm bg-white">
-            <table class="w-full text-right border-collapse text-xs">
+
+        <!-- جدول الأصناف -->
+        <div class="px-3 flex-1">
+          <div class="border border-slate-300 rounded-lg overflow-hidden">
+            <table class="w-full text-right border-collapse text-[8px]">
               <thead>
                 <tr class="bg-slate-100 text-slate-800 font-black border-b border-slate-300">
-                  <th class="p-3 text-center w-12 text-slate-900 border-l border-slate-200">#</th>
-                  <th class="p-3 font-bold text-xs text-slate-900 border-l border-slate-200">
-                    بيان اسم الصنف أو الخدمة الإعلانية المشغلة
-                  </th>
-                  <th class="p-3 text-center w-20 border-l border-slate-200">الوحدة</th>
-                  <th class="p-3 text-center w-16 border-l border-slate-200">الطول</th>
-                  <th class="p-3 text-center w-16 border-l border-slate-200">العرض</th>
-                  <th class="p-3 text-center w-16 border-l border-slate-200">الكمية</th>
-                  <th class="p-3 text-left w-32 text-slate-900">سعر الوحدة</th>
+                  <th class="p-1 text-center w-8">#</th>
+                  <th class="p-1 text-right">الصنف</th>
+                  <th class="p-1 text-center">الوحدة</th>
+                  <th class="p-1 text-center">الطول</th>
+                  <th class="p-1 text-center">العرض</th>
+                  <th class="p-1 text-center">العدد</th>
+                  <th class="p-1 text-left">سعر الوحدة</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-200">
+              <tbody>
                 <tr
                   v-for="(item, index) in currentSale.items"
                   :key="item.id"
-                  class="hover:bg-orange-50/10 transition-colors duration-150 odd:bg-white even:bg-slate-50/50"
+                  class="border-b border-slate-200"
                 >
-                  <td
-                    class="p-3 text-center font-mono font-bold text-slate-500 bg-slate-50 border-l border-slate-200"
-                  >
-                    {{ index + 1 }}
-                  </td>
-                  <td class="p-3 font-bold text-slate-900 text-xs py-3.5 border-l border-slate-200">
-                    {{ item.item_name }}
-                  </td>
-                  <td class="p-3 text-center text-slate-600 border-l border-slate-200">
-                    {{ item.unit_name || '-' }}
-                  </td>
-                  <td
-                    class="p-3 text-center font-mono font-medium text-slate-600 border-l border-slate-200"
-                  >
-                    {{ item.length !== null ? item.length : '-' }}
-                  </td>
-                  <td
-                    class="p-3 text-center font-mono font-medium text-slate-600 border-l border-slate-200"
-                  >
-                    {{ item.width !== null ? item.width : '-' }}
-                  </td>
-                  <td
-                    class="p-3 text-center font-mono font-bold text-slate-800 border-l border-slate-200 bg-slate-50/30"
-                  >
-                    {{ item.quantity }}
-                  </td>
-                  <td class="p-3 text-left font-mono font-bold text-slate-900 text-sm">
-                    {{ formatCurrency(item.unit_price) }}
-                  </td>
+                  <td class="p-1 text-center font-mono text-slate-500">{{ index + 1 }}</td>
+                  <td class="p-1 font-bold text-slate-900">{{ item.item_name }}</td>
+                  <td class="p-1 text-center">{{ item.unit_name || '-' }}</td>
+                  <td class="p-1 text-center font-mono">{{ item.length ?? '-' }}</td>
+                  <td class="p-1 text-center font-mono">{{ item.width ?? '-' }}</td>
+                  <td class="p-1 text-center font-bold">{{ item.quantity }}</td>
+                  <td class="p-1 text-left font-mono">{{ formatCurrency(item.unit_price) }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <div class="px-8 py-4 grid grid-cols-12 gap-6 items-stretch">
-          <div class="col-span-6">
-            <div
-              v-if="currentSale.notes"
-              class="border border-slate-200 rounded-xl p-4 text-xs text-slate-600 bg-slate-50 relative h-full flex flex-col justify-center"
-            >
-              <div class="absolute top-0 bottom-0 right-0 w-1 bg-orange-400 rounded-r"></div>
-              <span
-                class="font-bold text-slate-800 block mb-1.5 flex items-center gap-1.5 text-orange-700"
-              >
-                <span>📌</span> شروط وملاحظات التشغيل الفني:
-              </span>
-              <p class="leading-relaxed font-medium text-slate-700">{{ currentSale.notes }}</p>
-            </div>
-          </div>
-
-          <div class="col-span-6 flex justify-end">
-            <div
-              class="w-full max-w-sm bg-white border border-slate-300 rounded-xl p-4 space-y-2.5 shadow-sm text-xs"
-            >
-              <div class="flex justify-between items-center text-slate-600 font-medium">
-                <span>الإجمالي الفرعي المالي:</span>
-                <span class="font-mono font-bold text-slate-900">{{
-                  formatCurrency(currentSale.subtotal || 0)
-                }}</span>
-              </div>
-
-              <div
-                class="flex justify-between items-center text-rose-600 font-bold bg-rose-50 px-2 py-1 rounded-lg border border-rose-200"
-              >
-                <span>إجمالي الخصم الممنوح:</span>
-                <span class="font-mono font-black"
-                  >- {{ formatCurrency(currentSale.discount_amount || 0) }}</span
-                >
-              </div>
-
-              <div class="flex justify-between items-center text-slate-600 font-medium">
-                <span>ضريبة القيمة المضافة:</span>
-                <span class="font-mono font-bold text-slate-900">{{
-                  formatCurrency(currentSale.tax_amount || 0)
-                }}</span>
-              </div>
-
-              <div class="h-px bg-slate-300 my-1"></div>
-
-              <div
-                class="flex justify-between items-center pt-2 bg-gradient-to-r from-orange-50 to-amber-50/30 p-2 rounded-lg border border-orange-200"
-              >
-                <span class="text-xs font-black text-slate-900">الصافي النهائي المطلوب:</span>
-                <span class="font-mono text-base font-black text-orange-600">
-                  {{ formatCurrency(currentSale.grand_total || 0) }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="px-8 pt-8 pb-4 grid grid-cols-3 gap-6 text-center text-xs text-slate-500">
-          <div class="space-y-3">
-            <p class="font-bold text-slate-700">توقيع المستلم التنفيذي</p>
-            <div class="border-b border-dashed border-slate-300 mx-auto w-32 pt-2"></div>
-          </div>
-          <div class="space-y-3">
-            <p class="font-bold text-slate-700">أمين المستودع والمواد</p>
-            <div class="border-b border-dashed border-slate-300 mx-auto w-32 pt-2"></div>
-          </div>
-          <div class="space-y-3">
-            <p class="font-bold text-slate-700">اعتماد الكاشير والحسابات</p>
-            <div class="border-b border-dashed border-slate-300 mx-auto w-32 pt-2"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="relative w-full overflow-hidden mt-6 -mb-px">
-        <svg
-          class="w-full h-10 text-orange-500 fill-current block translate-y-1.5 scale-x-105"
-          viewBox="0 0 1440 74"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path d="M0,32 C240,70 480,10 720,45 C960,80 1200,20 1440,45 L1440,74 L0,74 Z"></path>
-        </svg>
-
-        <div class="bg-orange-500 text-white px-8 pt-3 pb-5 text-xs font-medium w-full">
+        <!-- الإجماليات -->
+        <div class="px-3 py-1">
           <div
-            class="grid grid-cols-3 gap-6 max-w-4xl mx-auto border-t border-white/20 pt-4 text-center items-center"
+            class="flex justify-end items-center gap-4 bg-slate-50 rounded-lg p-1.5 border border-slate-200 text-[9px]"
           >
-            <div
-              class="flex flex-col items-center justify-center space-y-1 border-l border-white/20 px-2 h-full"
-            >
-              <span class="opacity-75 text-[10px] font-bold tracking-wider"
-                >📍 الموقـع الرئيسي</span
-              >
-              <span class="font-bold tracking-wide">السودان - امدرمان</span>
+            <div class="flex items-center gap-1">
+              <span class="text-slate-600">الفرعي:</span>
+              <span class="font-mono font-bold">{{
+                formatCurrency(currentSale.subtotal || 0)
+              }}</span>
             </div>
-
-            <div
-              class="flex flex-col items-center justify-center space-y-1 border-l border-white/20 px-2 h-full"
-            >
-              <span class="opacity-75 text-[10px] font-bold tracking-wider">📞 قنوات الاتصال</span>
-              <span class="font-mono font-black text-sm tracking-widest">0500000000</span>
+            <div class="flex items-center gap-1 text-rose-600">
+              <span>الخصم:</span>
+              <span class="font-mono font-bold"
+                >-{{ formatCurrency(currentSale.discount_amount || 0) }}</span
+              >
             </div>
+            <div class="flex items-center gap-1">
+              <span>الضريبة:</span>
+              <span class="font-mono font-bold">{{
+                formatCurrency(currentSale.tax_amount || 0)
+              }}</span>
+            </div>
+            <div
+              class="flex items-center gap-1 bg-orange-100 px-2 py-0.5 rounded border border-orange-300"
+            >
+              <span class="font-black text-slate-900 text-[9px]">الصافي:</span>
+              <span class="font-mono font-black text-orange-600 text-[11px]">{{
+                formatCurrency(currentSale.grand_total || 0)
+              }}</span>
+            </div>
+          </div>
+        </div>
 
-            <div class="flex flex-col items-center justify-center space-y-1 px-2 h-full">
-              <span class="opacity-85 text-[10px] font-bold tracking-wider"
-                >📄 الرقم الضريبي للمنشأة</span
-              >
-              <div
-                class="bg-white/15 px-3 py-0.5 rounded-lg border border-white/10 shadow-inner mt-0.5"
-              >
-                <span class="font-mono font-black tracking-widest text-amber-100 text-xs"
-                  >300000000000003</span
-                >
-              </div>
+        <!-- التوقيعات -->
+        <div class="px-3 py-1 grid grid-cols-3 gap-2 text-center text-[8px] text-slate-500">
+          <div>
+            <p class="font-bold text-slate-700">توقيع المستلم</p>
+            <div class="border-b border-dashed border-slate-300 mx-auto w-16 pt-1"></div>
+          </div>
+          <div>
+            <p class="font-bold text-slate-700">أمين المستودع</p>
+            <div class="border-b border-dashed border-slate-300 mx-auto w-16 pt-1"></div>
+          </div>
+          <div>
+            <p class="font-bold text-slate-700">اعتماد الكاشير</p>
+            <div class="border-b border-dashed border-slate-300 mx-auto w-16 pt-1"></div>
+          </div>
+        </div>
+
+        <!-- تسمية نسخة العميل -->
+        <div class="text-center text-[7px] text-orange-600 font-bold pb-0.5">نسخة العميل</div>
+      </div>
+      <!-- ========== نهاية نسخة العميل ========== -->
+
+      <!-- ========== شريط الفصل بين النسختين ========== -->
+      <div class="print-splitter flex items-center gap-2 text-slate-400 px-3 py-1 no-print">
+        <hr class="flex-1 border-t-2 border-dashed border-slate-400" />
+        <span class="text-[8px] font-bold uppercase tracking-wider bg-white px-2">✂️ خط القطع</span>
+        <hr class="flex-1 border-t-2 border-dashed border-slate-400" />
+      </div>
+
+      <!-- ============================================================ -->
+      <!--                     نسخة الفني (النصف السفلي) - مطابقة تماماً -->
+      <!-- ============================================================ -->
+      <div
+        class="technician-copy border-t-2 border-dashed border-slate-400 pt-2"
+        style="height: 50%; min-height: 50%"
+      >
+        <!-- الشريط العلوي الملون (نفسه) -->
+        <div class="w-full flex h-2 overflow-hidden">
+          <div class="w-8/12 bg-gradient-to-r from-orange-600 to-orange-500"></div>
+          <div class="w-1/12 bg-amber-400"></div>
+          <div class="w-3/12 bg-slate-700"></div>
+        </div>
+
+        <!-- رأس الفاتورة (نفسه) -->
+        <div class="px-3 py-2 flex justify-between items-center gap-3 border-b border-slate-200">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-12 h-12 bg-slate-50 rounded-lg flex items-center justify-center border border-slate-200 p-1"
+            >
+              <img
+                src="/MainLogo2.png"
+                alt="شعار الشركة"
+                class="w-full h-full object-contain rounded"
+                onerror="this.style.display='none'"
+              />
+            </div>
+            <div class="text-right">
+              <h2 class="text-sm font-black text-slate-900">فيوتشر للدعاية</h2>
+              <p class="text-[8px] text-orange-600 font-bold">لوكالة الإبداعية</p>
             </div>
           </div>
 
-          <p class="text-center text-[10px] opacity-75 mt-4 font-medium tracking-wide">
-            شكرًا لثقتكم بوكالتنا الإعلانية - مستند مالي معتمد تم إنشاؤه إلكترونيًا
-          </p>
+          <div class="text-right space-y-0.5">
+            <div
+              class="bg-gradient-to-l from-slate-50 to-orange-50/50 px-2 py-0.5 rounded border-r-2 border-orange-500"
+            >
+              <span class="text-[10px] font-black text-orange-600">{{
+                currentSale.invoice_type_lbl
+              }}</span>
+            </div>
+            <div class="flex items-center gap-3 text-[9px]">
+              <span class="font-bold text-slate-500">رقم:</span>
+              <span class="font-mono font-black bg-slate-100 px-1.5 py-0.5 rounded">{{
+                currentSale.invoice_number
+              }}</span>
+              <span class="font-bold text-slate-500">التاريخ:</span>
+              <span class="font-mono font-bold">{{
+                formatDateOnly(currentSale.invoice_date)
+              }}</span>
+            </div>
+            <div class="flex items-center gap-3 text-[9px]">
+              <span class="font-bold text-slate-500">نوع البيع:</span>
+              <span
+                class="font-mono font-bold px-2 py-0.5 rounded-full border text-[8px]"
+                :class="
+                  currentSale.sale_type === 'indoor'
+                    ? 'text-emerald-700 border-emerald-300 bg-emerald-50'
+                    : 'text-amber-700 border-amber-300 bg-amber-50'
+                "
+              >
+                {{ currentSale.sale_type === 'indoor' ? 'داخلي' : 'خارجي' }}
+              </span>
+              <span class="font-bold text-slate-500">طريقة الدفع:</span>
+              <span class="font-bold text-slate-800">{{ currentSale.payment_type_lbl }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- معلومات العميل (نفسها) -->
+        <div class="px-3 py-1.5">
+          <div
+            class="grid grid-cols-2 gap-2 text-[9px] bg-slate-50 rounded-lg p-2 border border-slate-200"
+          >
+            <div class="text-right">
+              <span class="text-[8px] font-bold text-orange-600">العميل:</span>
+              <p class="font-black text-slate-900 text-xs">
+                {{ currentSale.customer_name || '-' }}
+              </p>
+              <p v-if="currentSale.customer_name_text" class="text-orange-600 font-bold text-[9px]">
+                {{ currentSale.customer_name_text }}
+              </p>
+              <p class="text-slate-500 text-[8px]">الموظف: {{ currentSale.user_name || '-' }}</p>
+            </div>
+            <div class="text-left">
+              <span class="text-[8px] font-bold text-slate-400">ملاحظات:</span>
+              <p class="text-[9px] text-slate-600 truncate" v-if="currentSale.notes">
+                {{ currentSale.notes }}
+              </p>
+              <p class="text-[9px] text-slate-400 italic" v-else>لا توجد ملاحظات</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- جدول الأصناف (نفسه) -->
+        <div class="px-3 flex-1">
+          <div class="border border-slate-300 rounded-lg overflow-hidden">
+            <table class="w-full text-right border-collapse text-[8px]">
+              <thead>
+                <tr class="bg-slate-100 text-slate-800 font-black border-b border-slate-300">
+                  <th class="p-1 text-center w-8">#</th>
+                  <th class="p-1 text-right">الصنف</th>
+                  <th class="p-1 text-center">الوحدة</th>
+                  <th class="p-1 text-center">الطول</th>
+                  <th class="p-1 text-center">العرض</th>
+                  <th class="p-1 text-center">العدد</th>
+                  <th class="p-1 text-left">سعر الوحدة</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(item, index) in currentSale.items"
+                  :key="item.id"
+                  class="border-b border-slate-200"
+                >
+                  <td class="p-1 text-center font-mono text-slate-500">{{ index + 1 }}</td>
+                  <td class="p-1 font-bold text-slate-900">{{ item.item_name }}</td>
+                  <td class="p-1 text-center">{{ item.unit_name || '-' }}</td>
+                  <td class="p-1 text-center font-mono">{{ item.length ?? '-' }}</td>
+                  <td class="p-1 text-center font-mono">{{ item.width ?? '-' }}</td>
+                  <td class="p-1 text-center font-bold">{{ item.quantity }}</td>
+                  <td class="p-1 text-left font-mono">{{ formatCurrency(item.unit_price) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- الإجماليات (نفسها) -->
+        <div class="px-3 py-1">
+          <div
+            class="flex justify-end items-center gap-4 bg-slate-50 rounded-lg p-1.5 border border-slate-200 text-[9px]"
+          >
+            <div class="flex items-center gap-1">
+              <span class="text-slate-600">الفرعي:</span>
+              <span class="font-mono font-bold">{{
+                formatCurrency(currentSale.subtotal || 0)
+              }}</span>
+            </div>
+            <div class="flex items-center gap-1 text-rose-600">
+              <span>الخصم:</span>
+              <span class="font-mono font-bold"
+                >-{{ formatCurrency(currentSale.discount_amount || 0) }}</span
+              >
+            </div>
+            <div class="flex items-center gap-1">
+              <span>الضريبة:</span>
+              <span class="font-mono font-bold">{{
+                formatCurrency(currentSale.tax_amount || 0)
+              }}</span>
+            </div>
+            <div
+              class="flex items-center gap-1 bg-orange-100 px-2 py-0.5 rounded border border-orange-300"
+            >
+              <span class="font-black text-slate-900 text-[9px]">الصافي:</span>
+              <span class="font-mono font-black text-orange-600 text-[11px]">{{
+                formatCurrency(currentSale.grand_total || 0)
+              }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- التوقيعات (نفسها) -->
+        <div class="px-3 py-1 grid grid-cols-3 gap-2 text-center text-[8px] text-slate-500">
+          <div>
+            <p class="font-bold text-slate-700">توقيع المستلم</p>
+            <div class="border-b border-dashed border-slate-300 mx-auto w-16 pt-1"></div>
+          </div>
+          <div>
+            <p class="font-bold text-slate-700">أمين المستودع</p>
+            <div class="border-b border-dashed border-slate-300 mx-auto w-16 pt-1"></div>
+          </div>
+          <div>
+            <p class="font-bold text-slate-700">اعتماد الكاشير</p>
+            <div class="border-b border-dashed border-slate-300 mx-auto w-16 pt-1"></div>
+          </div>
+        </div>
+
+        <!-- تسمية نسخة الفني -->
+        <div class="text-center text-[7px] text-amber-600 font-bold pb-0.5">
+          نسخة الفني - للاستخدام الداخلي
         </div>
       </div>
+      <!-- ========== نهاية نسخة الفني ========== -->
     </div>
   </div>
 </template>
@@ -402,7 +481,7 @@ watch(currentSale, async (newVal) => {
   }
 
   .invoice-box {
-    max-w: 100% !important;
+    max-width: 100% !important;
     width: 100% !important;
     border: none !important;
     padding: 0 !important;
@@ -412,13 +491,33 @@ watch(currentSale, async (newVal) => {
     min-height: 100vh !important;
   }
 
-  tr {
-    page-break-inside: avoid !important;
-    page-break-after: auto !important;
+  /* إظهار شريط القطع عند الطباعة */
+  .print-splitter {
+    display: flex !important;
+    border-top: 2px dashed #94a3b8 !important;
+    padding-top: 4px !important;
+    margin-top: 2px !important;
   }
 
+  /* جعل كل جزء يأخذ 50% من الصفحة */
+  .customer-copy,
+  .technician-copy {
+    height: 50% !important;
+    min-height: 50% !important;
+    max-height: 50% !important;
+    overflow: hidden !important;
+  }
+
+  /* ضمان عدم انقطاع الجداول بين الصفحات */
+  table {
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
   thead {
-    display: table-header-group !important;
+    display: table-header-group;
   }
 
   * {
@@ -431,8 +530,9 @@ watch(currentSale, async (newVal) => {
   font-family: inherit;
 }
 
-.logo-container {
-  min-width: 7rem;
-  min-height: 7rem;
+/* تقليل الهوامش العامة */
+.invoice-box > * {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 </style>
