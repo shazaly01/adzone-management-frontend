@@ -211,15 +211,15 @@
         <!-- التوقيعات -->
         <div class="px-3 py-1 grid grid-cols-3 gap-2 text-center text-[8px] text-slate-500">
           <div>
-            <p class="font-bold text-slate-700">توقيع المستلم</p>
+            <p class="font-bold text-slate-700">توقيع المصمم</p>
             <div class="border-b border-dashed border-slate-300 mx-auto w-16 pt-1"></div>
           </div>
           <div>
-            <p class="font-bold text-slate-700">أمين المستودع</p>
+            <p class="font-bold text-slate-700">توقيع المحاسب</p>
             <div class="border-b border-dashed border-slate-300 mx-auto w-16 pt-1"></div>
           </div>
           <div>
-            <p class="font-bold text-slate-700">اعتماد الكاشير</p>
+            <p class="font-bold text-slate-700">توقيع الطابع</p>
             <div class="border-b border-dashed border-slate-300 mx-auto w-16 pt-1"></div>
           </div>
         </div>
