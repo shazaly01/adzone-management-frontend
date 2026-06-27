@@ -102,6 +102,19 @@
                 >
               </p>
               <p class="flex justify-between items-center" dir="rtl">
+                <span>نوع البيع:</span>
+                <span
+                  class="font-mono font-bold px-2 py-0.5 rounded-full border text-xs"
+                  :class="
+                    currentSale.sale_type === 'indoor'
+                      ? 'text-emerald-700 border-emerald-300 bg-emerald-50'
+                      : 'text-amber-700 border-amber-300 bg-amber-50'
+                  "
+                >
+                  {{ currentSale.sale_type === 'indoor' ? 'داخلي' : 'خارجي' }}
+                </span>
+              </p>
+              <p class="flex justify-between items-center" dir="rtl">
                 <span>تاريخ الإصدار:</span>
                 <span class="font-mono font-bold text-slate-800">{{
                   formatDateOnly(currentSale.invoice_date)
@@ -111,46 +124,45 @@
           </div>
         </div>
 
-        <div class="px-8 py-6">
-          <div
-            class="grid grid-cols-2 gap-6 text-xs bg-slate-50 rounded-xl p-4 border border-slate-200 relative"
-          >
-            <div class="absolute top-0 bottom-0 right-0 w-1 bg-orange-500 rounded-r"></div>
+        <div
+          class="grid grid-cols-2 gap-6 text-xs bg-slate-50 rounded-xl p-4 border border-slate-200 relative"
+        >
+          <div class="absolute top-0 bottom-0 right-0 w-1 bg-orange-500 rounded-r"></div>
 
-            <div class="space-y-2 text-right border-l border-slate-200 pl-4">
-              <span class="text-[10px] font-bold text-orange-600 uppercase tracking-wider block"
-                >العميل والمستلم المعتمد</span
-              >
-              <p class="font-black text-slate-900 text-base">
-                {{ currentSale.customer_name || '-' }}
+          <!-- العمود الأيمن: معلومات العميل -->
+          <div class="space-y-2 text-right border-l border-slate-200 pl-4">
+            <span class="text-[10px] font-bold text-orange-600 uppercase tracking-wider block"
+              >العميل والمستلم المعتمد</span
+            >
+            <p class="font-black text-slate-900 text-base">
+              {{ currentSale.customer_name || '-' }}
+            </p>
+            <!-- اسم العميل النصي (إن وجد) -->
+            <p v-if="currentSale.customer_name_text" class="text-[11px] text-orange-600 font-bold">
+              {{ currentSale.customer_name_text }}
+            </p>
+          </div>
+
+          <!-- العمود الأيسر: التفاصيل المالية -->
+          <div class="space-y-2 text-right pr-4 flex flex-col justify-center">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block"
+              >تفاصيل التدقيق والاعتماد المالي</span
+            >
+            <div class="space-y-1">
+              <p class="font-bold text-slate-800 flex items-center gap-2">
+                <span>طريقة الدفع:</span>
+                <span
+                  class="px-2.5 py-0.5 bg-slate-800 text-white text-[10px] rounded-md font-black shadow-sm"
+                  >{{ currentSale.payment_type_lbl }}</span
+                >
               </p>
               <p class="text-[11px] text-slate-500">
-                المستودع الحاضن:
-                <span class="text-slate-800 font-bold">{{ currentSale.store_name || '-' }}</span>
+                الموظف المسؤول:
+                <span class="text-slate-800 font-bold">{{ currentSale.user_name || '-' }}</span>
               </p>
-            </div>
-
-            <div class="space-y-2 text-right pr-4 flex flex-col justify-center">
-              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block"
-                >تفاصيل التدقيق والاعتماد المالي</span
-              >
-              <div class="space-y-1">
-                <p class="font-bold text-slate-800 flex items-center gap-2">
-                  <span>طريقة الدفع:</span>
-                  <span
-                    class="px-2.5 py-0.5 bg-slate-800 text-white text-[10px] rounded-md font-black shadow-sm"
-                    >{{ currentSale.payment_type_lbl }}</span
-                  >
-                </p>
-                <p class="text-[11px] text-slate-500">
-                  الموظف المسؤول:
-                  <span class="text-slate-800 font-bold">{{ currentSale.user_name || '-' }}</span>
-                </p>
-              </div>
             </div>
           </div>
         </div>
-
         <div class="px-8 pb-4 flex-1">
           <div class="border border-slate-300 rounded-xl overflow-hidden shadow-sm bg-white">
             <table class="w-full text-right border-collapse text-xs">

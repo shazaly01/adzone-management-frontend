@@ -198,6 +198,8 @@ const form = ref({
   designer_id: '', // [إضافة ماليّة]: معرف المصمم المختار في الفوتر
   designer_meter_price: 0, // [إضافة ماليّة]: سعر المتر المعتمد للتصميم
   design_commission: 0, // [إضافة ماليّة]: إجمالي عمولة المصمم المحسوبة
+  sale_type: 'indoor', // [إضافة]
+  customer_name_text: null, // [إضافة]
   notes: '',
 })
 
@@ -472,6 +474,8 @@ onMounted(async () => {
         designer_id: cur.designer_id || '', // [إعادة شحن]: جلب معرف المصمم عند التعديل
         designer_meter_price: cur.designer_meter_price || 0, // [إعادة شحن]: جلب سعر المتر عند التعديل
         design_commission: cur.design_commission || 0, // [إعادة شحن]: جلب إجمالي العمولة القديمة عند التعديل
+        sale_type: cur.sale_type || 'indoor', // [إضافة]: جلب نوع البيع من الفاتورة
+        customer_name_text: cur.customer_name_text || null, // [إضافة]: جلب اسم العميل النصي
         notes: cur.notes || '',
       }
 
@@ -503,6 +507,8 @@ onMounted(async () => {
       form.value.store_id = authStore.user.store_id || ''
       form.value.treasury_id = authStore.user.treasury_id || ''
       form.value.bank_id = authStore.user.bank_id || ''
+      form.value.sale_type = 'indoor' // [إضافة]
+      form.value.customer_name_text = null // [إضافة]
     }
   }
 })

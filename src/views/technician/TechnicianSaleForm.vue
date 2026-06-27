@@ -1,3 +1,4 @@
+<!--src\views\technician\TechnicianSaleForm.vue--->
 <template>
   <div class="space-y-6 text-right font-sans pb-24" dir="rtl">
     <div
@@ -14,7 +15,9 @@
           البيانات المرجعية للفاتورة
         </h3>
       </div>
-      <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-semibold text-slate-400">
+      <div
+        class="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-xs font-semibold text-slate-400"
+      >
         <div class="flex flex-col space-y-1">
           <span class="text-[10px] text-slate-500">رقم المستند الرقمي:</span>
           <span class="font-mono font-bold text-slate-200 text-sm"
@@ -32,6 +35,23 @@
           <span class="font-bold text-slate-200 text-sm">{{
             technicianSaleStore.currentSale?.customer_name || 'عميل معتمد'
           }}</span>
+        </div>
+        <div class="flex flex-col space-y-1">
+          <span class="text-[10px] text-slate-500">اسم العميل (نص حر):</span>
+          <span class="font-bold text-[#e05e2b] text-sm">{{ customerNameText || '—' }}</span>
+        </div>
+        <div class="flex flex-col space-y-1">
+          <span class="text-[10px] text-slate-500">نوع البيع:</span>
+          <span
+            class="font-bold text-sm px-2 py-0.5 rounded-full border inline-block text-center"
+            :class="
+              saleType === 'indoor'
+                ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/30'
+                : 'text-amber-400 border-amber-500/30 bg-amber-950/30'
+            "
+          >
+            {{ saleType === 'indoor' ? 'داخلي' : 'خارجي' }}
+          </span>
         </div>
         <div class="flex flex-col space-y-1">
           <span class="text-[10px] text-slate-500">مستودع السحب الفعلي:</span>
@@ -315,6 +335,8 @@ const itemStore = useItemStore()
 
 const items = ref([])
 const productionStatus = ref('pending') // تتبع القيمة المختارة لحالة الورشة
+const saleType = ref('indoor')
+const customerNameText = ref(null)
 
 // تصفية وعزل الأصناف التي تعتمد على الأبعاد فقط لتغذية خيارات التبديل الهندسي للفني
 const dimensionalItemsOnly = computed(() => {
@@ -335,6 +357,8 @@ onMounted(async () => {
       // استخراج معرف المخزن المربوط بالفاتورة الحالية والحالة المحفوظة مسبقاً بالسيرفر
       const currentStoreId = technicianSaleStore.currentSale.store_id
       productionStatus.value = technicianSaleStore.currentSale.production_status || 'pending'
+      saleType.value = technicianSaleStore.currentSale.sale_type || 'indoor'
+      customerNameText.value = technicianSaleStore.currentSale.customer_name_text || null
 
       // 2. شحن دليل الأصناف من النظام مع تمرير المخزن لحساب الأرصدة ومنع خطأ التحقق
       await itemStore.fetchItems(1, { is_active: 1, store_id: currentStoreId })

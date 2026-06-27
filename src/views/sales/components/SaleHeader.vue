@@ -1,10 +1,11 @@
-<!--src\views\sales\components\SaleHeader.vue--->
 <template>
   <div
     class="p-5 bg-[#23252e] rounded-xl border-2 border-[#5d6170] shadow-2xl space-y-4 text-right font-sans"
     dir="rtl"
   >
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- الصف الأول: 4 أعمدة (نوع الفاتورة + المخزن + التاريخ + الخزنة/البنك) -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- invoice_type -->
       <div class="relative w-full">
         <div
           class="relative w-full h-11 bg-[#16171b] border border-[#e05e2b] rounded-lg flex items-center shadow-[0_0_10px_rgba(224,94,43,0.15)]"
@@ -39,9 +40,10 @@
         </p>
       </div>
 
-      <div class="w-full pointer-events-none select-none opacity-70">
+      <!-- store_id -->
+      <div class="relative w-full">
         <div
-          class="relative w-full h-11 bg-[#16171b] border border-[#3e414c] rounded-lg flex items-center"
+          class="relative w-full h-11 bg-[#16171b] border border-[#3e414c] rounded-lg flex items-center transition-all duration-200 hover:border-[#e05e2b]"
         >
           <span class="absolute right-3 text-gray-400 pointer-events-none z-10">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,12 +64,49 @@
             />
           </div>
         </div>
+        <p v-if="getFieldError('store_id')" class="text-rose-500 text-[10px] font-bold mt-1 pr-1">
+          {{ getFieldError('store_id') }}
+        </p>
       </div>
 
-      <div class="w-full">
+      <!-- invoice_date (تم نقله من الصف الثاني) -->
+      <div class="relative w-full">
+        <div
+          class="relative w-full h-11 bg-[#16171b] border border-[#3e414c] rounded-lg flex items-center transition-all duration-200 hover:border-[#e05e2b]"
+        >
+          <input
+            type="date"
+            v-model="formData.invoice_date"
+            class="block w-full h-full pr-4 pl-20 bg-transparent text-white focus:outline-none text-xs font-mono font-bold text-right"
+          />
+
+          <span
+            class="absolute left-3 text-gray-400 pointer-events-none flex items-center gap-1.5 text-xs z-10"
+          >
+            <span class="text-gray-400 font-medium text-[11px]">تاريخ</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </span>
+        </div>
+        <p
+          v-if="getFieldError('invoice_date')"
+          class="text-rose-500 text-[10px] font-bold mt-1 pr-1"
+        >
+          {{ getFieldError('invoice_date') }}
+        </p>
+      </div>
+
+      <!-- treasury_id / bank_id (حسب payment_type) -->
+      <div class="relative w-full">
         <div
           v-if="formData.payment_type === 'cash'"
-          class="relative w-full h-11 bg-[#16171b] border border-[#e05e2b] rounded-lg flex items-center animate-fade-in pointer-events-none select-none opacity-70 shadow-[0_0_10px_rgba(224,94,43,0.15)]"
+          class="relative w-full h-11 bg-[#16171b] border border-[#e05e2b] rounded-lg flex items-center animate-fade-in shadow-[0_0_10px_rgba(224,94,43,0.15)]"
         >
           <span class="absolute right-3 text-[#e05e2b] pointer-events-none z-10">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,7 +130,7 @@
 
         <div
           v-if="formData.payment_type === 'card'"
-          class="relative w-full h-11 bg-[#16171b] border border-[#e05e2b] rounded-lg flex items-center animate-fade-in pointer-events-none select-none opacity-70 shadow-[0_0_10px_rgba(224,94,43,0.15)]"
+          class="relative w-full h-11 bg-[#16171b] border border-[#e05e2b] rounded-lg flex items-center animate-fade-in shadow-[0_0_10px_rgba(224,94,43,0.15)]"
         >
           <span class="absolute right-3 text-[#e05e2b] pointer-events-none z-10">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,10 +151,26 @@
             />
           </div>
         </div>
+
+        <div
+          v-if="formData.payment_type === 'credit'"
+          class="relative w-full h-11 bg-[#16171b] border border-dashed border-[#3e414c] rounded-lg flex items-center justify-center text-gray-500 text-xs font-medium"
+        >
+          <span>دين آجل - لا يوجد خزنة أو بنك</span>
+        </div>
+
+        <p
+          v-if="getFieldError('treasury_id') || getFieldError('bank_id')"
+          class="text-rose-500 text-[10px] font-bold mt-1 pr-1"
+        >
+          {{ getFieldError('treasury_id') || getFieldError('bank_id') }}
+        </p>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- الصف الثاني: 4 أعمدة (طريقة الدفع + العميل + نوع البيع (راديو) + اسم العميل النصي) -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- payment_type -->
       <div class="relative w-full">
         <div
           class="relative w-full h-11 bg-[#16171b] border border-[#3e414c] rounded-lg flex items-center transition-all duration-200 hover:border-[#e05e2b]"
@@ -151,6 +206,7 @@
         </p>
       </div>
 
+      <!-- customer_id -->
       <div class="relative w-full">
         <div
           class="relative w-full h-11 bg-[#16171b] border border-[#e05e2b] rounded-lg flex items-center transition-all duration-200 focus-within:border-[#e05e2b] focus-within:ring-1 focus-within:ring-[#e05e2b] shadow-[0_0_10px_rgba(224,94,43,0.15)]"
@@ -183,42 +239,90 @@
         </p>
       </div>
 
+      <!-- sale_type (أزرار راديو) -->
       <div class="relative w-full">
         <div
-          class="relative w-full h-11 bg-[#16171b] border border-[#3e414c] rounded-lg flex items-center transition-all duration-200 hover:border-[#e05e2b]"
+          class="relative w-full h-11 bg-[#16171b] border border-[#3e414c] rounded-lg flex items-center px-3 gap-2 transition-all duration-200 hover:border-[#e05e2b]"
         >
-          <input
-            type="date"
-            v-model="formData.invoice_date"
-            class="block w-full h-full pr-4 pl-20 bg-transparent text-white focus:outline-none text-xs font-mono font-bold text-right"
-          />
-
-          <span
-            class="absolute left-3 text-gray-400 pointer-events-none flex items-center gap-1.5 text-xs z-10"
-          >
-            <span class="text-gray-400 font-medium text-[11px]">تاريخ</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <span class="absolute right-3 text-gray-400 pointer-events-none z-10">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
               />
             </svg>
           </span>
+
+          <div class="flex items-center gap-2 w-full pr-10">
+            <label
+              class="flex items-center gap-1 cursor-pointer text-xs font-medium text-gray-300 hover:text-white transition-colors"
+            >
+              <input
+                type="radio"
+                v-model="formData.sale_type"
+                value="indoor"
+                class="w-3.5 h-3.5 accent-[#e05e2b]"
+              />
+              داخلي
+            </label>
+            <label
+              class="flex items-center gap-1 cursor-pointer text-xs font-medium text-gray-300 hover:text-white transition-colors"
+            >
+              <input
+                type="radio"
+                v-model="formData.sale_type"
+                value="outdoor"
+                class="w-3.5 h-3.5 accent-[#e05e2b]"
+              />
+              خارجي
+            </label>
+          </div>
         </div>
-        <p
-          v-if="getFieldError('invoice_date')"
-          class="text-rose-500 text-[10px] font-bold mt-1 pr-1"
-        >
-          {{ getFieldError('invoice_date') }}
+        <p v-if="getFieldError('sale_type')" class="text-rose-500 text-[10px] font-bold mt-1 pr-1">
+          {{ getFieldError('sale_type') }}
         </p>
       </div>
 
-      <div
-        v-if="formData.invoice_type === 'return'"
-        class="relative w-full md:col-span-3 animate-fade-in mt-1"
-      >
+      <!-- customer_name_text -->
+      <div class="relative w-full">
+        <div
+          class="relative w-full h-11 bg-[#16171b] border border-[#3e414c] rounded-lg flex items-center transition-all duration-200 hover:border-[#e05e2b] focus-within:border-[#e05e2b] focus-within:ring-1 focus-within:ring-[#e05e2b]"
+        >
+          <span class="absolute right-3 text-gray-400 pointer-events-none z-10">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
+            </svg>
+          </span>
+
+          <input
+            type="text"
+            v-model="formData.customer_name_text"
+            placeholder="اسم العميل (نص حر - اختياري)"
+            class="block w-full h-full pr-10 pl-4 bg-transparent text-white focus:outline-none text-xs font-medium placeholder-gray-500"
+          />
+        </div>
+        <p
+          v-if="getFieldError('customer_name_text')"
+          class="text-rose-500 text-[10px] font-bold mt-1 pr-1"
+        >
+          {{ getFieldError('customer_name_text') }}
+        </p>
+      </div>
+    </div>
+
+    <!-- حالة المرتجع: اختيار الفاتورة الأم (في صف منفصل أسفل الصفين) -->
+    <div
+      v-if="formData.invoice_type === 'return'"
+      class="grid grid-cols-1 gap-4 mt-2 animate-fade-in"
+    >
+      <div class="relative w-full">
         <div
           class="relative w-full h-11 bg-[#16171b] border border-dashed border-[#e05e2b]/40 rounded-lg flex items-center"
         >
@@ -320,6 +424,14 @@ const getFieldError = (path) => {
 onMounted(async () => {
   await customerStore.fetchCustomers(1, { is_active: 1 })
 
+  // تعيين القيم الافتراضية للحقول الجديدة إن لم تكن موجودة
+  if (formData.value.sale_type === undefined) {
+    formData.value.sale_type = 'indoor'
+  }
+  if (formData.value.customer_name_text === undefined) {
+    formData.value.customer_name_text = null
+  }
+
   if (formData.value.invoice_type === 'return' && formData.value.customer_id) {
     await loadOriginalSales()
   }
@@ -327,10 +439,41 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* نفس التنسيقات السابقة */
 input[type='date']::-webkit-calendar-picker-indicator {
   filter: invert(1);
   cursor: pointer;
   opacity: 0.6;
+}
+
+input[type='radio'] {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #5d6170;
+  border-radius: 50%;
+  background: transparent;
+  transition: 0.2s;
+  position: relative;
+  cursor: pointer;
+}
+input[type='radio']:checked {
+  border-color: #e05e2b;
+  background: #e05e2b;
+}
+input[type='radio']:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+}
+input[type='radio']:hover {
+  border-color: #e05e2b;
 }
 
 .animate-fade-in {

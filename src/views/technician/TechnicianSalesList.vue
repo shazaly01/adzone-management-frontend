@@ -1,3 +1,4 @@
+<!--src\views\technician\TechnicianSalesList.vue--->
 <template>
   <div class="space-y-6">
     <div class="flex justify-between items-center mb-6 text-right" dir="rtl">
@@ -117,8 +118,23 @@
             <span class="font-bold text-xs text-text-primary">
               العميل: {{ item.customer_name || item.customer?.name || '-' }}
             </span>
-            <span class="text-[11px] text-text-secondary mt-0.5">
-              مخزن سحب الخامات: {{ item.store_name || item.store?.name || '-' }}
+            <span v-if="item.customer_name_text" class="font-bold text-xs text-[#e05e2b] mt-0.5">
+              {{ item.customer_name_text }}
+            </span>
+          </div>
+        </template>
+
+        <template #cell-sale_type="{ item }">
+          <div class="flex justify-center items-center" dir="rtl">
+            <span
+              :class="[
+                'px-3 py-1 text-xs font-black rounded-full border transition-all',
+                item.sale_type === 'indoor'
+                  ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30'
+                  : 'bg-amber-950/40 text-amber-400 border-amber-500/30',
+              ]"
+            >
+              {{ item.sale_type === 'indoor' ? 'داخلي' : 'خارجي' }}
             </span>
           </div>
         </template>
@@ -186,7 +202,8 @@ let autoRefreshInterval = null // [إضافة برمجية]: متغير لحفظ
 const tableHeaders = computed(() => [
   { key: 'id', label: 'المعرف الرقمي' },
   { key: 'invoice_info', label: 'حالة وتاريخ السند' },
-  { key: 'entities', label: 'المخازن والجهات المعنية' },
+  { key: 'entities', label: 'الجهات المعنية' },
+  { key: 'sale_type', label: 'نوع البيع', class: 'text-center' },
   { key: 'actions', label: 'إجراءات تخصصية', class: 'text-left min-w-[120px]' },
 ])
 

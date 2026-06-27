@@ -1,3 +1,4 @@
+<!---src\views\sales\SaleTable.vue--->
 <template>
   <AppCard>
     <AppTable
@@ -41,8 +42,8 @@
           <span class="font-bold text-xs text-text-primary">
             العميل: {{ item.customer_name || item.customer?.name || '-' }}
           </span>
-          <span class="text-[11px] text-text-secondary mt-0.5">
-            المستودع: {{ item.store_name || item.store?.name || '-' }}
+          <span v-if="item.customer_name_text" class="font-bold text-xs text-[#e05e2b] mt-0.5">
+            {{ item.customer_name_text }}
           </span>
         </div>
       </template>
