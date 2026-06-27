@@ -48,6 +48,21 @@
         </div>
       </template>
 
+      <template #cell-sale_type="{ item }">
+        <div class="flex justify-center items-center" dir="rtl">
+          <span
+            :class="[
+              'px-2 py-0.5 text-[10px] font-black rounded-full border',
+              item.sale_type === 'indoor'
+                ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30'
+                : 'bg-amber-950/40 text-amber-400 border-amber-500/30',
+            ]"
+          >
+            {{ item.sale_type === 'indoor' ? 'indoor' : 'outdoor' }}
+          </span>
+        </div>
+      </template>
+
       <template #cell-payment_type="{ item }">
         <span
           :class="[
@@ -162,6 +177,7 @@ const tableHeaders = computed(() => [
   { key: 'id', label: 'المعرف المالي' },
   { key: 'invoice_info', label: 'طبيعة وتاريخ السند' },
   { key: 'entities', label: 'الجهات ذات الصلة' },
+  { key: 'sale_type', label: 'نوع البيع', class: 'text-center' }, // <- أضف هذا
   { key: 'payment_type', label: 'طريقة الدفع' },
   { key: 'financials', label: 'الحساب المالي والتدقيق' },
   { key: 'actions', label: 'إجراءات تخصصية', class: 'text-left min-w-[90px]' },

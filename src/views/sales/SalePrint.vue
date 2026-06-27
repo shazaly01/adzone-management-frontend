@@ -74,8 +74,8 @@
               />
             </div>
             <div class="text-right">
-              <h2 class="text-sm font-black text-slate-900">فيوتشر للدعاية</h2>
-              <p class="text-[8px] text-orange-600 font-bold">لوكالة الإبداعية</p>
+              <h2 class="text-sm font-black text-slate-900">فيوتشر للدعاية للدعاية والاعلان</h2>
+              <p class="text-[8px] text-orange-600 font-bold">انظم الينا واكتشف</p>
             </div>
           </div>
 
@@ -107,7 +107,7 @@
                     : 'text-amber-700 border-amber-300 bg-amber-50'
                 "
               >
-                {{ currentSale.sale_type === 'indoor' ? 'داخلي' : 'خارجي' }}
+                {{ currentSale.sale_type === 'indoor' ? 'indoor' : 'outdoor' }}
               </span>
               <span class="font-bold text-slate-500">طريقة الدفع:</span>
               <span class="font-bold text-slate-800">{{ currentSale.payment_type_lbl }}</span>
@@ -264,8 +264,8 @@
               />
             </div>
             <div class="text-right">
-              <h2 class="text-sm font-black text-slate-900">فيوتشر للدعاية</h2>
-              <p class="text-[8px] text-orange-600 font-bold">لوكالة الإبداعية</p>
+              <h2 class="text-sm font-black text-slate-900">فيوتشر للدعاية والاعلان</h2>
+              <p class="text-[8px] text-orange-600 font-bold">انضم الينا واكتشف</p>
             </div>
           </div>
 
@@ -401,15 +401,15 @@
         <!-- التوقيعات (نفسها) -->
         <div class="px-3 py-1 grid grid-cols-3 gap-2 text-center text-[8px] text-slate-500">
           <div>
-            <p class="font-bold text-slate-700">توقيع المستلم</p>
+            <p class="font-bold text-slate-700">توقيع المصمم</p>
             <div class="border-b border-dashed border-slate-300 mx-auto w-16 pt-1"></div>
           </div>
           <div>
-            <p class="font-bold text-slate-700">أمين المستودع</p>
+            <p class="font-bold text-slate-700">توقيع المحاسب</p>
             <div class="border-b border-dashed border-slate-300 mx-auto w-16 pt-1"></div>
           </div>
           <div>
-            <p class="font-bold text-slate-700">اعتماد الكاشير</p>
+            <p class="font-bold text-slate-700">توقيع الطابع</p>
             <div class="border-b border-dashed border-slate-300 mx-auto w-16 pt-1"></div>
           </div>
         </div>

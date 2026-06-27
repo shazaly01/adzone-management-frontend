@@ -266,7 +266,7 @@
                 value="indoor"
                 class="w-3.5 h-3.5 accent-[#e05e2b]"
               />
-              داخلي
+              indoor
             </label>
             <label
               class="flex items-center gap-1 cursor-pointer text-xs font-medium text-gray-300 hover:text-white transition-colors"
@@ -277,7 +277,7 @@
                 value="outdoor"
                 class="w-3.5 h-3.5 accent-[#e05e2b]"
               />
-              خارجي
+              outdoor
             </label>
           </div>
         </div>

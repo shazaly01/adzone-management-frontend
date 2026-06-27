@@ -50,7 +50,7 @@
                 : 'text-amber-400 border-amber-500/30 bg-amber-950/30'
             "
           >
-            {{ saleType === 'indoor' ? 'داخلي' : 'خارجي' }}
+            {{ saleType === 'indoor' ? 'indoor' : 'outdoor' }}
           </span>
         </div>
         <div class="flex flex-col space-y-1">

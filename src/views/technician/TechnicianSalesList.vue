@@ -134,7 +134,7 @@
                   : 'bg-amber-950/40 text-amber-400 border-amber-500/30',
               ]"
             >
-              {{ item.sale_type === 'indoor' ? 'داخلي' : 'خارجي' }}
+              {{ item.sale_type === 'indoor' ? 'indoor' : 'outdoor' }}
             </span>
           </div>
         </template>
