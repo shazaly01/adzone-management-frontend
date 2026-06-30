@@ -511,7 +511,8 @@ watch(
       return
     }
 
-    await itemStore.fetchItems(1, { is_active: 1, store_id: newStoreId })
+    // [التعديل]: تم حقن معامل الجلب الشامل "all: true" لكسر الترقيم وجلب الـ 100 صنف كاملة دفعة واحدة للمكون المحلي
+    await itemStore.fetchItems(1, { is_active: 1, store_id: newStoreId, all: true })
 
     const activeItemIds = items.value.map((row) => row.item_id).filter((id) => id)
 
