@@ -645,11 +645,11 @@ onMounted(async () => {
         payment_type: cur.payment_type,
         discount_amount: cur.discount_amount || 0,
         tax_amount: cur.tax_amount || 0,
-        designer_id: cur.designer_id || '', // [إعادة شحن]: جلب معرف المصمم عند التعديل
-        designer_meter_price: cur.designer_meter_price || 0, // [إعادة شحن]: جلب سعر المتر عند التعديل
-        design_commission: cur.design_commission || 0, // [إعادة شحن]: جلب إجمالي العمولة القديمة عند التعديل
-        sale_type: cur.sale_type || 'indoor', // [إضافة]: جلب نوع البيع من الفاتورة
-        customer_name_text: cur.customer_name_text || null, // [إضافة]: جلب اسم العميل النصي
+        designer_id: cur.designer_id || '',
+        designer_meter_price: cur.designer_meter_price || 0,
+        design_commission: cur.design_commission || 0,
+        sale_type: cur.sale_type || 'indoor',
+        customer_name_text: cur.customer_name_text || null,
         notes: cur.notes || '',
       }
 
@@ -662,7 +662,7 @@ onMounted(async () => {
           is_dimensional: !!it.is_dimensional,
           length: it.length,
           width: it.width,
-          dimension_unit: 'm', // [إضافة]: ضبط وحدة الأبعاد الافتراضية عند التعديل
+          dimension_unit: 'm',
           is_designed: !!it.is_designed,
           quantity: it.quantity,
           unit_price: it.unit_price,
@@ -673,13 +673,13 @@ onMounted(async () => {
         }
       })
 
-      // أضف هذا السطر مباشرة بعد نهاية تعبئة مصفوفة items.value في التعديل
       items.value.forEach((row) => {
         updateSqmFromDimensions(row)
       })
 
       if (cur.store_id) {
-        await itemStore.fetchItems(1, { is_active: 1, store_id: cur.store_id })
+        // [التعديل هنا]: تم حقن معامل الجلب الشامل "all: true" لشاشة التعديل أيضاً
+        await itemStore.fetchItems(1, { is_active: 1, store_id: cur.store_id, all: true })
       }
     }
   } else {
@@ -687,8 +687,8 @@ onMounted(async () => {
       form.value.store_id = authStore.user.store_id || ''
       form.value.treasury_id = authStore.user.treasury_id || ''
       form.value.bank_id = authStore.user.bank_id || ''
-      form.value.sale_type = 'indoor' // [إضافة]
-      form.value.customer_name_text = null // [إضافة]
+      form.value.sale_type = 'indoor'
+      form.value.customer_name_text = null
     }
   }
 })

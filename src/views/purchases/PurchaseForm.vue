@@ -297,7 +297,8 @@ watch(
       return
     }
 
-    await itemStore.fetchItems(1, { is_active: 1, store_id: newStoreId })
+    // [التعديل]: تم دمج معامل "all: true" لضمان جلب كافة الـ 100 صنف دفعة واحدة عند تغيير المخزن
+    await itemStore.fetchItems(1, { is_active: 1, store_id: newStoreId, all: true })
 
     const activeItemIds = items.value.map((row) => row.item_id).filter((id) => id)
 
@@ -394,7 +395,8 @@ onMounted(async () => {
 
       // 3. شحن لوحة البحث بناءً على مستودع الفاتورة المعدلة
       if (cur.store_id) {
-        await itemStore.fetchItems(1, { is_active: 1, store_id: cur.store_id })
+        // [التعديل]: إضافة معامل الجلب الشامل "all: true" لضمان تحميل الـ 100 صنف كاملة عند تعديل الفاتورة
+        await itemStore.fetchItems(1, { is_active: 1, store_id: cur.store_id, all: true })
       }
     }
     isHydrating.value = false
