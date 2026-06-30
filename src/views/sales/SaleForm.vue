@@ -87,11 +87,13 @@
                   step="0.01"
                   min="0"
                   v-model.number="row.length"
+                  @input="updateSqmFromDimensions(row)"
                   class="w-full p-1 bg-[#16171b] border border-[#3e414c] hover:border-gray-500 focus:border-[#e05e2b] rounded transition-all text-xs text-center font-mono text-white font-bold outline-none focus:ring-1 focus:ring-[#e05e2b]/30"
                   placeholder="0.00"
                 />
                 <select
                   v-model="row.dimension_unit"
+                  @change="updateSqmFromDimensions(row)"
                   class="bg-[#16171b] text-white border border-[#3e414c] rounded text-xs p-1 flex-shrink-0"
                   style="width: 45px"
                 >
@@ -117,11 +119,13 @@
                   step="0.01"
                   min="0"
                   v-model.number="row.width"
+                  @input="updateSqmFromDimensions(row)"
                   class="w-full p-1 bg-[#16171b] border border-[#3e414c] hover:border-gray-500 focus:border-[#e05e2b] rounded transition-all text-xs text-center font-mono text-white font-bold outline-none focus:ring-1 focus:ring-[#e05e2b]/30"
                   placeholder="0.00"
                 />
                 <select
                   v-model="row.dimension_unit"
+                  @change="updateSqmFromDimensions(row)"
                   class="bg-[#16171b] text-white border border-[#3e414c] rounded text-xs p-1 flex-shrink-0"
                   style="width: 45px"
                 >
@@ -135,6 +139,37 @@
                   تأكد من الوحدة!
                 </span>
               </div>
+              <span v-else class="text-gray-500 font-bold text-center block w-full">-</span>
+            </div>
+          </template>
+
+          <template #cell-quantity="{ row, index, col }">
+            <div class="w-full flex justify-center items-center">
+              <input
+                type="text"
+                v-model="row.quantity"
+                @input="updateSqmFromDimensions(row)"
+                :data-row="index"
+                :data-col="col.key"
+                class="w-full p-1 bg-transparent border-none text-white font-bold text-xs focus:outline-none text-center font-mono transition-all focus:bg-[#16171b]/40 focus:rounded"
+                placeholder="0"
+              />
+            </div>
+          </template>
+
+          <template #cell-total_sqm="{ row, index, col }">
+            <div class="w-full flex justify-center items-center">
+              <input
+                v-if="row.is_dimensional"
+                type="text"
+                v-model="row.total_sqm"
+                @input="handleSqmInput(row)"
+                @blur="snapSqmToActual(row)"
+                :data-row="index"
+                :data-col="col.key"
+                class="w-full p-1 bg-[#16171b] border border-[#3e414c] hover:border-gray-500 focus:border-[#e05e2b] rounded transition-all text-xs text-center font-mono text-white font-bold outline-none focus:ring-1 focus:ring-[#e05e2b]/30"
+                placeholder="0.00"
+              />
               <span v-else class="text-gray-500 font-bold text-center block w-full">-</span>
             </div>
           </template>
@@ -212,6 +247,7 @@
   </div>
 </template>
 
+<!--src\views\sales\SaleForm.vue--->
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -363,20 +399,9 @@ const detailSchema = [
   {
     key: 'total_sqm',
     label: 'إجمالي متر مربع',
-    type: 'calculated',
-    readonly: true,
+    type: 'number',
     widthClass: 'w-[6%]',
-    formula: (row) => {
-      if (!row.is_dimensional) return null
-      let l = parseFloat(row.length) || 0
-      let w = parseFloat(row.width) || 0
-      const q = parseFloat(row.quantity) || 0
-      if (row.dimension_unit === 'cm') {
-        l = parseFloat((l / 100).toFixed(6))
-        w = parseFloat((w / 100).toFixed(6))
-      }
-      return parseFloat((l * w * q).toFixed(4))
-    },
+    slot: 'cell-total_sqm',
   },
   {
     key: 'quantity',
@@ -510,10 +535,70 @@ watch(
     }
   },
 )
+// 1. حساب المتر المربع بناءً على الأبعاد والقطع (التي قد تحتوي على خانة عشرية واحدة)
+const updateSqmFromDimensions = (row) => {
+  if (!row.is_dimensional) {
+    row.total_sqm = null
+    return
+  }
+  let l = parseFloat(row.length) || 0
+  let w = parseFloat(row.width) || 0
+  const q = parseFloat(row.quantity) || 0
+  if (row.dimension_unit === 'cm') {
+    l = l / 100
+    w = w / 100
+  }
+  // 👇 التعديل هنا: تحويل التقريب إلى خانتين فقط لإخفاء الفروق العشرية المجهرية
+  row.total_sqm = l * w * q ? parseFloat((l * w * q).toFixed(2)) : 0
+}
+
+const handleSqmInput = (row) => {
+  if (typeof row.total_sqm === 'string' && row.total_sqm.endsWith('.')) {
+    return
+  }
+
+  const sqm = parseFloat(row.total_sqm) || 0
+  if (sqm <= 0) {
+    row.quantity = 0
+    return
+  }
+
+  let l = parseFloat(row.length) || 0
+  let w = parseFloat(row.width) || 0
+  if (l <= 0 || w <= 0) return
+
+  if (row.dimension_unit === 'cm') {
+    l = l / 100
+    w = w / 100
+  }
+
+  const singleItemArea = l * w
+  if (singleItemArea > 0) {
+    const rawQty = sqm / singleItemArea
+    row.quantity = parseFloat(rawQty.toFixed(1))
+  }
+}
+
+// 3. مطابقة وتأمين ثبات الرقم عند الخروج من الحقل لضمان المزامنة المطلقة مع الباك إند
+const snapSqmToActual = (row) => {
+  const userTypedSqm = parseFloat(row.total_sqm) || 0
+  updateSqmFromDimensions(row)
+
+  // إذا كان الفرق بين ما كتبته وبين المحسوب مجهرياً، احتفظ برقمك الصحيح كما هو
+  if (Math.abs((parseFloat(row.total_sqm) || 0) - userTypedSqm) < 0.05) {
+    row.total_sqm = userTypedSqm
+  }
+}
 
 const handleGlobalItemSelect = (selectedItem) => {
   if (!selectedItem) return
   handleItemSelected(selectedItem)
+
+  // حساب المساحة الابتدائية للسطر المضاف حديثاً
+  const lastRow = items.value[items.value.length - 1]
+  if (lastRow) {
+    updateSqmFromDimensions(lastRow)
+  }
 }
 
 const triggerAddNewEmptyLine = () => {
@@ -585,6 +670,11 @@ onMounted(async () => {
           base_stock: parseFloat(it.current_stock) || 0,
           _flashing: false,
         }
+      })
+
+      // أضف هذا السطر مباشرة بعد نهاية تعبئة مصفوفة items.value في التعديل
+      items.value.forEach((row) => {
+        updateSqmFromDimensions(row)
       })
 
       if (cur.store_id) {

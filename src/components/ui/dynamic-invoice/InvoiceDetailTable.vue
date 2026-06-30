@@ -1,3 +1,4 @@
+<!--src\components\ui\dynamic-invoice\InvoiceDetailTable.vue--->
 <template>
   <div class="space-y-3" ref="tableContainerRef">
     <div class="overflow-hidden rounded-xl border-2 border-[#5d6170] shadow-2xl">
