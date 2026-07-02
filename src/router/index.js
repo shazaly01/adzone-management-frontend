@@ -179,10 +179,18 @@ const routes = [
         meta: { permission: 'journal_entry.update' },
       },
       {
-        path: 'vouchers',
-        name: 'VouchersList',
+        path: 'vouchers/payment',
+        name: 'PaymentVouchersList',
         component: VouchersList,
         meta: { permission: 'voucher.view' },
+        props: { forcedType: 'payment' },
+      },
+      {
+        path: 'vouchers/receipt',
+        name: 'ReceiptVouchersList',
+        component: VouchersList,
+        meta: { permission: 'voucher.view' },
+        props: { forcedType: 'receipt' },
       },
 
       // ==========================================

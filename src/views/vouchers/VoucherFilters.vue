@@ -1,7 +1,10 @@
 <template>
   <AppCard class="mb-6">
     <div class="p-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+      <div
+        class="grid grid-cols-1 gap-4 items-end"
+        :class="hideTypeFilter ? 'md:grid-cols-2' : 'md:grid-cols-3'"
+      >
         <div class="w-full">
           <h3 class="font-semibold text-sm mb-2 text-text-secondary">بحث سريع</h3>
           <div class="relative">
@@ -27,7 +30,7 @@
           </div>
         </div>
 
-        <div class="w-full">
+        <div v-if="!hideTypeFilter" class="w-full">
           <h3 class="font-semibold text-sm mb-2 text-text-secondary">نوع السند</h3>
           <div class="relative">
             <select
@@ -106,6 +109,11 @@ defineProps({
   paymentMethodFilter: {
     type: String,
     default: '',
+  },
+  // الخاصية البنائية الجديدة لإخفاء قائمة تحديد النوع تلقائياً خلف الكواليس
+  hideTypeFilter: {
+    type: Boolean,
+    default: false,
   },
 })
 

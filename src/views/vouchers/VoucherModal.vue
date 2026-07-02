@@ -65,6 +65,7 @@
             :is-saving="isSaving"
             :accounts="accounts"
             :validation-errors="validationErrors"
+            :is-type-disabled="isTypeDisabled"
             @submit="handleFormSubmit"
             @cancel="close"
           />
@@ -85,7 +86,7 @@ const props = defineProps({
   },
   voucher: {
     type: Object,
-    default: null, // يحمل السند الحالي في حالة التعديل، أو null للإضافة الجديدة
+    default: null,
   },
   isSaving: {
     type: Boolean,
@@ -99,17 +100,24 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  // الخاصية البنائية الجديدة لتمرير حالة قفل حقل النوع للتأكيد البصري
+  isTypeDisabled: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'save'])
 
-// احتساب عنوان النافذة بشكل تفصيلي احترافي يفهمه المحاسب والمستخدم فوراً
+// احتساب عنوان النافذة بشكل تفصيلي وموجه لاسم وصنف الشاشة المفتوحة حالياً
 const modalTitle = computed(() => {
+  const isReceipt = props.voucher?.voucher_type === 'receipt'
+
   if (props.voucher && props.voucher.id) {
-    const prefix = props.voucher.voucher_type === 'receipt' ? 'تعديل سند قبض' : 'تعديل سند صرف'
+    const prefix = isReceipt ? 'تعديل سند قبض' : 'تعديل سند صرف'
     return `${prefix} رقم (${props.voucher.voucher_number || props.voucher.id})`
   } else {
-    return 'إنشاء مستند مالي جديد (صرف / إيراد)'
+    return isReceipt ? 'إنشاء سند قبض جديد' : 'إنشاء سند صرف جديد'
   }
 })
 
@@ -123,7 +131,6 @@ const handleFormSubmit = (formData) => {
 </script>
 
 <style scoped>
-/* شريط تمرير أنيق متوافق مع هوية الواجهة داخل المودال عند الشاشات الصغيرة */
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
 }

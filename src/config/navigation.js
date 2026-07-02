@@ -40,8 +40,14 @@ export const navigationConfig = [
     permission: 'purchase.view',
   },
   {
-    name: 'سندات القبض والصرف',
-    routeName: 'VouchersList',
+    name: 'سندات الصرف',
+    routeName: 'PaymentVouchersList',
+    icon: ReceiptRefundIcon,
+    permission: 'voucher.view',
+  },
+  {
+    name: 'سندات القبض',
+    routeName: 'ReceiptVouchersList',
     icon: ReceiptRefundIcon,
     permission: 'voucher.view',
   },

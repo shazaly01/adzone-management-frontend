@@ -1,3 +1,4 @@
+<!--src\views\vouchers\VoucherPrint.vue--->
 <template>
   <div class="print-container bg-white text-slate-900 font-sans r2l" dir="rtl">
     <!-- حالة التحميل قبل جلب البيانات -->

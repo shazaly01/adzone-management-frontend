@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-text-primary">إدارة سندات الصرف والقبض</h1>
+      <h1 class="text-2xl font-bold text-text-primary">{{ pageTitle }}</h1>
       <AppButton v-if="authStore.can('voucher.create')" @click="openVoucherModal()">
         إنشاء سند مالي جديد
       </AppButton>
@@ -11,6 +11,7 @@
       v-model:searchQuery="searchQuery"
       v-model:voucherTypeFilter="voucherTypeFilter"
       v-model:paymentMethodFilter="paymentMethodFilter"
+      :hide-type-filter="!!forcedType"
       @update:searchQuery="onSearch"
       @update:voucherTypeFilter="handlePageChange(1)"
       @update:paymentMethodFilter="handlePageChange(1)"
@@ -20,6 +21,7 @@
       :vouchers="vouchers"
       :pagination="pagination"
       :loading="loading"
+      :hide-type-column="!!forcedType"
       @page-change="handlePageChange"
       @edit-voucher="openVoucherModal"
       @delete-voucher="openDeleteDialog"
@@ -34,6 +36,7 @@
       :is-saving="loading"
       :accounts="accounts"
       :validation-errors="validationErrors"
+      :is-type-disabled="!!forcedType"
       @save="handleSaveVoucher"
     />
 
@@ -47,7 +50,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useVoucherStore } from '@/stores/voucherStore'
 import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
@@ -59,6 +62,14 @@ import AppConfirmDialog from '@/components/ui/AppConfirmDialog.vue'
 import VoucherFilters from './VoucherFilters.vue'
 import VoucherTable from './VoucherTable.vue'
 import VoucherModal from './VoucherModal.vue'
+
+// استقبال خاصية الإجبار على نوع محدد من الراوتر مباشرة
+const props = defineProps({
+  forcedType: {
+    type: String,
+    default: '', // يمكن أن تكون 'payment' أو 'receipt' أو فارغة للموحد
+  },
+})
 
 const voucherStore = useVoucherStore()
 const authStore = useAuthStore()
@@ -72,6 +83,13 @@ let searchTimeout = null
 
 const accounts = ref([])
 
+// احتساب عنوان الشاشة بدقة متناهية بناءً على سياق الراوتر
+const pageTitle = computed(() => {
+  if (props.forcedType === 'payment') return 'إدارة سندات الصرف'
+  if (props.forcedType === 'receipt') return 'إدارة سندات القبض'
+  return 'إدارة سندات الصرف والقبض الموحدة'
+})
+
 const onSearch = () => {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => {
@@ -80,9 +98,10 @@ const onSearch = () => {
 }
 
 const handlePageChange = (page = 1) => {
+  // حقن الـ forcedType في الفلاتر آلياً لحجب بيانات الصنف الآخر تماماً خلف الكواليس
   const filters = {
     search: searchQuery.value,
-    voucher_type: voucherTypeFilter.value,
+    voucher_type: props.forcedType || voucherTypeFilter.value,
     payment_method: paymentMethodFilter.value,
   }
 
@@ -90,6 +109,17 @@ const handlePageChange = (page = 1) => {
     toast.error('حدث خطأ أثناء جلب السندات المالية من الخادم.')
   })
 }
+
+// حارس ومراقب حركي متأهب لإعادة تصفية وجلب البيانات فوراً عند تبديل المستخدم بين الشاشتين
+watch(
+  () => props.forcedType,
+  () => {
+    searchQuery.value = ''
+    voucherTypeFilter.value = ''
+    paymentMethodFilter.value = ''
+    handlePageChange(1)
+  },
+)
 
 onMounted(() => {
   handlePageChange()
@@ -113,7 +143,15 @@ const openVoucherModal = (voucher = null) => {
 
   if (validationErrors.value) validationErrors.value = null
 
-  selectedVoucher.value = voucher ? { ...voucher } : null
+  if (voucher) {
+    selectedVoucher.value = { ...voucher }
+  } else {
+    // [حقن ذكي]: تهيئة السند الجديد وتثبيت نوعه تلقائياً بناءً على نوع الشاشة المفتوحة حالياً
+    selectedVoucher.value = {
+      id: null,
+      voucher_type: props.forcedType || 'payment',
+    }
+  }
   isModalOpen.value = true
 }
 
@@ -137,7 +175,6 @@ const handleSaveVoucher = async (formData) => {
   }
 }
 
-// [الدالة الجديدة]: فتح مسار طباعة السندات المعزول في علامة تبويب جديدة مستقلة مقاس A5
 const openVoucherPrintPage = (voucher) => {
   window.open(`/print/vouchers/${voucher.id}`, '_blank')
 }

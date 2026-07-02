@@ -1,297 +1,214 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="max-w-3xl mx-auto space-y-4">
+  <form
+    @submit.prevent="handleSubmit"
+    class="p-6 bg-[#23252e] rounded-xl border-2 border-[#5d6170] shadow-2xl space-y-5 text-right font-sans"
+    dir="rtl"
+  >
+    <!-- الصف الأول: طريقة الدفع + تاريخ الاستحقاق -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-text-secondary mb-1">
-          نوع السند المالي <span class="text-rose-500">*</span>
-        </label>
-        <div class="relative">
-          <select
-            v-model="form.voucher_type"
-            class="block w-full px-3 py-2 border border-surface-border rounded-lg bg-surface-ground text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all sm:text-sm appearance-none cursor-pointer"
-            required
-          >
-            <option value="payment">سند صرف</option>
-            <option value="receipt">سند قبض</option>
-          </select>
-          <div
-            class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400 text-xs"
-          >
-            ▼
-          </div>
-        </div>
-        <p v-if="validationErrors?.voucher_type" class="text-rose-500 text-xs mt-1 font-bold">
-          {{ validationErrors.voucher_type[0] }}
-        </p>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-text-secondary mb-1">
+      <!-- طريقة الدفع والنقدية -->
+      <div class="relative w-full">
+        <label class="block text-xs font-bold text-gray-300 mb-1.5 pr-1">
           طريقة الدفع والنقدية <span class="text-rose-500">*</span>
         </label>
-        <div class="relative">
+        <div
+          class="relative w-full h-11 bg-[#16171b] border border-[#e05e2b] rounded-lg flex items-center shadow-[0_0_10px_rgba(224,94,43,0.15)]"
+        >
+          <span class="absolute right-3 text-[#e05e2b] pointer-events-none z-10">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+              />
+            </svg>
+          </span>
+
           <select
             v-model="form.payment_method"
             @change="handlePaymentMethodChange"
-            class="block w-full px-3 py-2 border border-surface-border rounded-lg bg-surface-ground text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all sm:text-sm appearance-none cursor-pointer"
+            style="color-scheme: dark"
+            class="block w-full h-full pr-10 pl-10 bg-transparent text-white focus:outline-none text-xs font-bold appearance-none cursor-pointer"
             required
           >
-            <option value="cash">نقدي (خزينة)</option>
-            <option value="bank">بنكي (حساب مصرفي)</option>
+            <option value="cash" class="bg-[#16171b]">نقدي (خزينة)</option>
+            <option value="bank" class="bg-[#16171b]">بنكي (حساب مصرفي)</option>
           </select>
-          <div
-            class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400 text-xs"
-          >
-            ▼
-          </div>
+
+          <span class="absolute left-4 text-gray-500 pointer-events-none text-[10px]">▼</span>
         </div>
-        <p v-if="validationErrors?.payment_method" class="text-rose-500 text-xs mt-1 font-bold">
+        <p
+          v-if="validationErrors?.payment_method"
+          class="text-rose-500 text-[10px] font-bold mt-1 pr-1"
+        >
           {{ validationErrors.payment_method[0] }}
         </p>
       </div>
-    </div>
 
-    <hr class="border-gray-100 dark:border-surface-border/50 my-2" />
-
-    <div class="pb-2">
-      <TreasuriesDropdown
-        v-if="form.payment_method === 'cash'"
-        id="fund-treasury-id"
-        label="الحساب النقدية المتأثر (الخزينة)"
-        v-model="form.fund_account_id"
-        required
-      />
-      <BanksDropdown
-        v-else-if="form.payment_method === 'bank'"
-        id="fund-bank-id"
-        label="الحساب البنكي المتأثر"
-        v-model="form.fund_account_id"
-        required
-      />
-      <p v-if="validationErrors?.fund_account_id" class="text-rose-500 text-xs mt-1 font-bold">
-        {{ validationErrors.fund_account_id[0] }}
-      </p>
-    </div>
-
-    <div class="relative pb-2">
-      <label class="block text-sm font-medium text-gray-700 dark:text-text-secondary mb-1">
-        الحساب المستهدف (الجهة المستلمة / المسلمة) <span class="text-rose-500">*</span>
-      </label>
-      <div class="relative">
-        <input
-          type="text"
-          readonly
-          :value="selectedLedgerName"
-          @click="toggleDropdown"
-          placeholder="اضغط لاختيار الحساب المساعد (مورد، عميل، مصروف، بنك، خزنة)..."
-          class="block w-full px-3 py-2 border border-surface-border rounded-lg bg-surface-ground text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all sm:text-sm cursor-pointer text-right"
-          required
-        />
-        <div
-          class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400 text-xs"
-        >
-          ▼
-        </div>
-      </div>
-
-      <div
-        v-if="isDropdownOpen"
-        class="absolute z-50 mt-1 w-full bg-white dark:bg-surface-ground border border-surface-border rounded-lg shadow-xl p-3 space-y-3"
-      >
-        <div class="flex flex-wrap gap-1 bg-gray-100 dark:bg-surface-border p-1 rounded-md">
-          <button
-            type="button"
-            @click="activeTab = 'all'"
-            :class="[
-              'flex-1 text-xs py-1.5 px-2 rounded font-medium transition-all text-center',
-              activeTab === 'all'
-                ? 'bg-primary text-white shadow-sm font-bold'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white',
-            ]"
-          >
-            الكل
-          </button>
-          <button
-            type="button"
-            @click="activeTab = 'bank_treasury'"
-            :class="[
-              'flex-1 text-xs py-1.5 px-2 rounded font-medium transition-all text-center',
-              activeTab === 'bank_treasury'
-                ? 'bg-primary text-white shadow-sm font-bold'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white',
-            ]"
-          >
-            البنوك والخزائن
-          </button>
-          <button
-            type="button"
-            @click="activeTab = 'expense'"
-            :class="[
-              'flex-1 text-xs py-1.5 px-2 rounded font-medium transition-all text-center',
-              activeTab === 'expense'
-                ? 'bg-primary text-white shadow-sm font-bold'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white',
-            ]"
-          >
-            المصروفات
-          </button>
-          <button
-            type="button"
-            @click="activeTab = 'supplier'"
-            :class="[
-              'flex-1 text-xs py-1.5 px-2 rounded font-medium transition-all text-center',
-              activeTab === 'supplier'
-                ? 'bg-primary text-white shadow-sm font-bold'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white',
-            ]"
-          >
-            الموردين
-          </button>
-          <button
-            type="button"
-            @click="activeTab = 'customer'"
-            :class="[
-              'flex-1 text-xs py-1.5 px-2 rounded font-medium transition-all text-center',
-              activeTab === 'customer'
-                ? 'bg-primary text-white shadow-sm font-bold'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white',
-            ]"
-          >
-            العملاء
-          </button>
-          <button
-            type="button"
-            @click="activeTab = 'designer'"
-            :class="[
-              'flex-1 text-xs py-1.5 px-2 rounded font-medium transition-all text-center',
-              activeTab === 'designer'
-                ? 'bg-primary text-white shadow-sm font-bold'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white',
-            ]"
-          >
-            المصممون
-          </button>
-        </div>
-
-        <input
-          type="text"
-          v-model="searchQuery"
-          ref="searchInputRef"
-          placeholder="اكتب اسم الحساب المساعد للبحث الفوري..."
-          class="block w-full px-3 py-1.5 border border-surface-border rounded-md bg-gray-50 dark:bg-surface-border text-text-primary focus:ring-2 focus:ring-primary outline-none text-sm"
-        />
-
-        <div v-if="isDataLoading" class="text-center py-4 text-xs text-gray-400">
-          جاري تحديث جلب الحسابات المساعدة...
-        </div>
-
-        <ul
-          v-else
-          class="max-h-48 overflow-y-auto divide-y divide-gray-100 dark:divide-surface-border text-sm"
-        >
-          <li v-for="item in filteredSubLedgers" :key="item.composite_key">
-            <button
-              type="button"
-              @click="selectLedger(item)"
-              class="w-full text-right px-3 py-2 hover:bg-gray-50 dark:hover:bg-surface-border flex justify-between items-center transition-colors rounded-none"
-            >
-              <span class="font-medium text-text-primary">{{ item.name }}</span>
-              <span :class="['text-[10px] px-2 py-0.5 rounded-full font-bold', item.badgeClass]">
-                {{ item.displayType }}
-              </span>
-            </button>
-          </li>
-          <li v-if="filteredSubLedgers.length === 0" class="text-center py-4 text-gray-400 text-xs">
-            لا توجد نتائج مطابقة للبحث أو التصنيف الحالي
-          </li>
-        </ul>
-      </div>
-
-      <p
-        v-if="validationErrors?.sub_ledger_id || validationErrors?.account_id"
-        class="text-rose-500 text-xs mt-1 font-bold"
-      >
-        يرجى تحديد حساب مستهدف صحيح من القائمة
-      </p>
-    </div>
-
-    <hr class="border-gray-100 dark:border-surface-border/50 my-2" />
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <AppCurrencyInput
-          id="voucher-amount"
-          label="المبلغ المالي *"
-          v-model="form.amount"
-          placeholder="0.00"
-          required
-        />
-        <p v-if="validationErrors?.amount" class="text-rose-500 text-xs mt-1 font-bold">
-          {{ validationErrors.amount[0] }}
-        </p>
-      </div>
-
-      <div>
-        <label
-          for="voucher-date"
-          class="block text-sm font-medium text-gray-700 dark:text-text-secondary mb-1"
-        >
+      <!-- تاريخ السند ووقت الاستحقاق -->
+      <div class="relative w-full">
+        <label class="block text-xs font-bold text-gray-300 mb-1.5 pr-1">
           تاريخ السند ووقت الاستحقاق <span class="text-rose-500">*</span>
         </label>
-        <input
-          id="voucher-date"
-          type="date"
-          v-model="form.voucher_date"
-          class="block w-full px-3 py-1.5 border border-gray-300 dark:border-surface-border rounded-lg bg-surface-ground text-gray-900 dark:text-text-primary focus:ring-1 focus:ring-primary outline-none transition-all sm:text-sm font-medium"
-          required
-        />
-        <p v-if="validationErrors?.voucher_date" class="text-rose-500 text-xs mt-1 font-bold">
+        <div
+          class="relative w-full h-11 bg-[#16171b] border border-[#3e414c] rounded-lg flex items-center transition-all duration-200 hover:border-[#e05e2b] focus-within:border-[#e05e2b] focus-within:shadow-[0_0_10px_rgba(224,94,43,0.15)]"
+        >
+          <input
+            type="date"
+            v-model="form.voucher_date"
+            class="block w-full h-full pr-4 pl-20 bg-transparent text-white focus:outline-none text-xs font-mono font-bold text-right"
+            required
+          />
+
+          <span
+            class="absolute left-3 text-gray-400 pointer-events-none flex items-center gap-1.5 text-xs z-10"
+          >
+            <span class="text-gray-400 font-medium text-[11px]">تاريخ القيد</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </span>
+        </div>
+        <p
+          v-if="validationErrors?.voucher_date"
+          class="text-rose-500 text-[10px] font-bold mt-1 pr-1"
+        >
           {{ validationErrors.voucher_date[0] }}
         </p>
       </div>
     </div>
 
-    <div>
-      <AppTextarea
-        id="voucher-notes"
-        label="البيان والشرح التفصيلي للمستند"
-        v-model="form.notes"
-        placeholder="اكتب هنا تفاصيل سبب الصرف، الإيراد أو التحويل الداخلي..."
-        :rows="2"
+    <hr class="border-gray-100 dark:border-surface-border/50 my-2" />
+
+    <!-- الطرف الأول لقناة النقدية: (صرف من / إيراد لـ) -->
+    <div class="relative w-full">
+      <label class="block text-xs font-bold text-gray-300 mb-1.5 pr-1">
+        {{ fundAccountLabel }}
+      </label>
+      <div
+        class="relative w-full h-11 bg-[#16171b] border border-[#e05e2b] rounded-lg flex items-center shadow-[0_0_10px_rgba(224,94,43,0.15)]"
+      >
+        <span class="absolute right-3 text-[#e05e2b] pointer-events-none z-10">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            />
+          </svg>
+        </span>
+        <div class="w-full h-full pr-10 pl-2 flex items-center">
+          <TreasuriesDropdown
+            v-if="form.payment_method === 'cash'"
+            id="fund-treasury-id"
+            v-model="form.fund_account_id"
+            variant="sales"
+            class="w-full bg-transparent text-white text-xs font-bold focus:outline-none"
+          />
+          <BanksDropdown
+            v-else-if="form.payment_method === 'bank'"
+            id="fund-bank-id"
+            v-model="form.fund_account_id"
+            variant="sales"
+            class="w-full bg-transparent text-white text-xs font-bold focus:outline-none"
+          />
+        </div>
+      </div>
+      <p
+        v-if="validationErrors?.fund_account_id"
+        class="text-rose-500 text-[10px] font-bold mt-1 pr-1"
+      >
+        {{ validationErrors.fund_account_id[0] }}
+      </p>
+    </div>
+
+    <!-- الطرف الثاني للشجرة والحسابات المساعدة -->
+    <VoucherSubLedgerDropdown
+      v-model:subLedgerType="form.sub_ledger_type"
+      v-model:subLedgerId="form.sub_ledger_id"
+      v-model:accountId="form.account_id"
+      :label="targetAccountLabel"
+      :accounts="accounts"
+      :validationErrors="validationErrors"
+    />
+
+    <hr class="border-gray-100 dark:border-surface-border/50 my-2" />
+
+    <!-- صف القيمة المالية المطور: استخدام مكون المنشأة الرسمي مع تحجيمه بـ max-w-xs ليصبح قصيراً ومنظماً -->
+    <div class="w-full max-w-xs">
+      <AppCurrencyInput
+        id="voucher-amount"
+        label="المبلغ المالي المعتمد *"
+        v-model="form.amount"
+        variant="sales"
+        placeholder="0.00"
+        required
       />
-      <p v-if="validationErrors?.notes" class="text-rose-500 text-xs mt-1 font-bold">
+      <p v-if="validationErrors?.amount" class="text-rose-500 text-[10px] font-bold mt-1 pr-1">
+        {{ validationErrors.amount[0] }}
+      </p>
+    </div>
+
+    <!-- البيان والشرح التفصيلي -->
+    <div class="relative w-full">
+      <label class="block text-xs font-bold text-gray-300 mb-1.5 pr-1">
+        البيان والشرح التفصيلي للمستند
+      </label>
+      <div
+        class="relative w-full bg-[#16171b] border border-[#3e414c] rounded-lg p-2 transition-all duration-200 hover:border-[#e05e2b] focus-within:border-[#e05e2b] focus-within:shadow-[0_0_10px_rgba(224,94,43,0.15)]"
+      >
+        <textarea
+          id="voucher-notes"
+          v-model="form.notes"
+          placeholder="اكتب هنا تفاصيل سبب الصرف أو القبض بشكل دقيق لدعم التقرير المالي المحاسبي..."
+          rows="2"
+          class="block w-full bg-transparent text-white focus:outline-none text-xs font-medium placeholder-gray-500 resize-none text-right"
+        ></textarea>
+      </div>
+      <p v-if="validationErrors?.notes" class="text-rose-500 text-[10px] font-bold mt-1 pr-1">
         {{ validationErrors.notes[0] }}
       </p>
     </div>
 
-    <div
-      class="flex justify-end space-x-2 space-x-reverse border-t border-surface-border pt-3 mt-4"
-    >
-      <AppButton type="button" variant="secondary" @click="handleCancel">إلغاء</AppButton>
-      <AppButton type="submit" :disabled="isSaving" variant="primary">
-        <span v-if="isSaving">جاري الحفظ...</span>
-        <span v-else>حفظ واعتماد السند المالي</span>
-      </AppButton>
+    <!-- أزرار التحكم والمفاتيح التشغيلية -->
+    <div class="flex justify-end space-x-2 space-x-reverse border-t border-[#3e414c] pt-4 mt-2">
+      <button
+        type="button"
+        @click="handleCancel"
+        class="px-5 h-9 bg-[#3e414c] hover:bg-[#4e5261] text-white rounded-lg text-xs font-bold transition-all"
+      >
+        إلغاء المعاملة
+      </button>
+      <button
+        type="submit"
+        :disabled="isSaving"
+        class="px-5 h-9 bg-[#e05e2b] hover:bg-[#f06e3b] text-white rounded-lg text-xs font-bold shadow-lg shadow-[#e05e2b]/15 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <span v-if="isSaving">جاري ترحيل السند...</span>
+        <span v-else>حفظ واعتماد المستند المالي</span>
+      </button>
     </div>
   </form>
 </template>
 
 <script setup>
-import { ref, watch, computed, nextTick, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 
-import { useSupplierStore } from '@/stores/supplierStore'
-import { useCustomerStore } from '@/stores/customerStore'
-import { useExpenseStore } from '@/stores/expenseStore'
-import { useUserStore } from '@/stores/userStore'
 import { useTreasuryStore } from '@/stores/treasuryStore'
 import { useBankStore } from '@/stores/bankStore'
 
-import AppButton from '@/components/ui/AppButton.vue'
-import AppCurrencyInput from '@/components/ui/AppCurrencyInput.vue'
-import AppTextarea from '@/components/ui/AppTextarea.vue'
 import TreasuriesDropdown from '@/components/forms/TreasuriesDropdown.vue'
 import BanksDropdown from '@/components/forms/BanksDropdown.vue'
+import VoucherSubLedgerDropdown from '@/components/forms/VoucherSubLedgerDropdown.vue'
+import AppCurrencyInput from '@/components/ui/AppCurrencyInput.vue'
 
 const props = defineProps({
   initialData: {
@@ -310,39 +227,31 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  isTypeDisabled: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['submit', 'cancel'])
 
-const supplierStore = useSupplierStore()
-const customerStore = useCustomerStore()
-const expenseStore = useExpenseStore()
-const userStore = useUserStore()
 const treasuryStore = useTreasuryStore()
 const bankStore = useBankStore()
 
-const { suppliers, loading: suppliersLoading } = storeToRefs(supplierStore)
-const { customers, loading: customersLoading } = storeToRefs(customerStore)
-const { expenses, loading: expensesLoading } = storeToRefs(expenseStore)
-const { users: designers, loading: designersLoading } = storeToRefs(userStore)
-const { banks, loading: banksLoading } = storeToRefs(bankStore)
-const { treasuries, loading: treasuriesLoading } = storeToRefs(treasuryStore)
+const { banks } = storeToRefs(bankStore)
+const { treasuries } = storeToRefs(treasuryStore)
 
-const isDropdownOpen = ref(false)
-const activeTab = ref('all')
-const searchQuery = ref('')
-const selectedLedgerName = ref('')
-const searchInputRef = ref(null)
+const fundAccountLabel = computed(() => {
+  const isCash = form.value.payment_method === 'cash'
+  if (form.value.voucher_type === 'payment') {
+    return isCash ? 'صرف من الخزنة *' : 'صرف من البنك *'
+  } else {
+    return isCash ? 'إيراد للخزنة *' : 'إيراد للبنك *'
+  }
+})
 
-const isDataLoading = computed(() => {
-  return (
-    suppliersLoading.value ||
-    customersLoading.value ||
-    expensesLoading.value ||
-    designersLoading.value ||
-    banksLoading.value ||
-    treasuriesLoading.value
-  )
+const targetAccountLabel = computed(() => {
+  return form.value.voucher_type === 'payment' ? 'إلى حساب *' : 'من حساب *'
 })
 
 const createFreshForm = () => {
@@ -365,22 +274,9 @@ const createFreshForm = () => {
 
 const form = ref(createFreshForm())
 
-const designersAccount = computed(() => {
-  return props.accounts.find((acc) => acc.code === '2103') || null
-})
-
 onMounted(async () => {
   try {
     const promises = []
-    if (expenses.value.length === 0)
-      promises.push(expenseStore.fetchExpenses(1, { per_page: 1000 }))
-    if (suppliers.value.length === 0)
-      promises.push(supplierStore.fetchSuppliers(1, { per_page: 1000 }))
-    if (customers.value.length === 0)
-      promises.push(customerStore.fetchCustomers(1, { per_page: 1000 }))
-    if (designers.value.length === 0)
-      promises.push(userStore.fetchUsers(1, { type: 'designer', per_page: 1000 }))
-
     if (treasuries.value.length === 0)
       promises.push(treasuryStore.fetchTreasuries(1, { per_page: 1000 }))
     if (banks.value.length === 0) promises.push(bankStore.fetchBanks(1, { per_page: 1000 }))
@@ -388,148 +284,11 @@ onMounted(async () => {
     if (promises.length > 0) {
       await Promise.all(promises)
     }
-    syncSelectedLedgerName()
   } catch (err) {
-    console.error('Failed to load sub-ledger data for voucher search field:', err)
+    console.error('Failed to load fund account data for voucher form:', err)
   }
 })
 
-const unifiedSubLedgers = computed(() => {
-  const list = []
-
-  expenses.value.forEach((item) => {
-    list.push({
-      composite_key: `expense:${item.id}`,
-      id: item.id,
-      type: 'expense',
-      account_id: item.account_id,
-      name: item.name,
-      displayType: 'مصروف',
-      badgeClass: 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-400',
-    })
-  })
-
-  suppliers.value.forEach((item) => {
-    list.push({
-      composite_key: `supplier:${item.id}`,
-      id: item.id,
-      type: 'supplier',
-      account_id: item.account_id,
-      name: item.name,
-      displayType: 'مورد',
-      badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400',
-    })
-  })
-
-  customers.value.forEach((item) => {
-    list.push({
-      composite_key: `customer:${item.id}`,
-      id: item.id,
-      type: 'customer',
-      account_id: item.account_id,
-      name: item.name,
-      displayType: 'عميل',
-      badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-400',
-    })
-  })
-
-  designers.value.forEach((item) => {
-    list.push({
-      composite_key: `designer:${item.id}`,
-      id: item.id,
-      type: 'designer',
-      account_id: designersAccount.value?.id || '',
-      name: item.full_name,
-      displayType: 'مصمم',
-      badgeClass: 'bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-400',
-    })
-  })
-
-  banks.value.forEach((item) => {
-    list.push({
-      composite_key: `bank:${item.id}`,
-      id: item.id,
-      type: 'bank',
-      account_id: item.account_id,
-      name: item.name,
-      displayType: 'بنك',
-      badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400',
-    })
-  })
-
-  treasuries.value.forEach((item) => {
-    list.push({
-      composite_key: `treasury:${item.id}`,
-      id: item.id,
-      type: 'treasury',
-      account_id: item.account_id,
-      name: item.name,
-      displayType: 'خزنة',
-      badgeClass: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-400',
-    })
-  })
-
-  return list
-})
-
-const filteredSubLedgers = computed(() => {
-  return unifiedSubLedgers.value.filter((item) => {
-    const matchesTab =
-      activeTab.value === 'all' ||
-      (activeTab.value === 'bank_treasury'
-        ? item.type === 'bank' || item.type === 'treasury'
-        : item.type === activeTab.value)
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    return matchesTab && matchesSearch
-  })
-})
-
-const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value
-  if (isDropdownOpen.value) {
-    nextTick(() => {
-      searchInputRef.value?.focus()
-    })
-  }
-}
-
-const selectLedger = (item) => {
-  if (item.type === 'designer') {
-    const dynamicAcc = props.accounts.find((a) => a.code === '2103')
-    form.value.account_id = dynamicAcc ? dynamicAcc.id : item.account_id
-  } else if (item.type === 'bank') {
-    const dynamicAcc = props.accounts.find((a) => a.code === '1102')
-    form.value.account_id = dynamicAcc ? dynamicAcc.id : item.account_id
-  } else if (item.type === 'treasury') {
-    const dynamicAcc = props.accounts.find((a) => a.code === '1101')
-    form.value.account_id = dynamicAcc ? dynamicAcc.id : item.account_id
-  } else {
-    form.value.account_id = item.account_id
-  }
-
-  form.value.sub_ledger_type = item.type
-  form.value.sub_ledger_id = item.id
-  selectedLedgerName.value = `${item.name} (${item.displayType})`
-  isDropdownOpen.value = false
-  searchQuery.value = ''
-}
-
-const syncSelectedLedgerName = () => {
-  if (form.value.sub_ledger_type && form.value.sub_ledger_id) {
-    const target = unifiedSubLedgers.value.find(
-      (item) => item.type === form.value.sub_ledger_type && item.id == form.value.sub_ledger_id,
-    )
-    if (target) {
-      selectedLedgerName.value = `${target.name} (${target.displayType})`
-    } else {
-      selectedLedgerName.value = 'حساب مساعد تم تحديده مسبقاً'
-    }
-  } else {
-    selectedLedgerName.value = ''
-  }
-}
-
-// [حماية استراتيجية ثنائية المسار]: ربط الـ v-model بمعرّف الـ ID الفرعي لثبات الاختيار داخل الكومبوننت وعدم تفريغه
 watch(
   () => form.value.fund_account_id,
   (newVal) => {
@@ -543,7 +302,6 @@ watch(
       const target = treasuries.value.find((t) => t.account_id == newVal || t.id == newVal)
       if (target) {
         form.value.treasury_id = target.id
-        // لضمان استقرار الـ Dropdown ومنع اختفاء النص؛ نحتفظ بـ id الفرعي في الواجهة
         if (form.value.fund_account_id == target.account_id && target.id !== target.account_id) {
           form.value.fund_account_id = target.id
         }
@@ -569,7 +327,6 @@ watch(
         formattedDate = newData.voucher_date.split(' ')[0]
       }
 
-      // مطابقة بيانات التعديل وتحويل الـ account_id إلى المعرف الفرعي المقابل لتأمين العرض عند التعديل
       let fundAccountId = newData.fund_account_id || ''
       if (newData.payment_method === 'cash' && newData.treasury_id) {
         fundAccountId = newData.treasury_id
@@ -591,21 +348,11 @@ watch(
         voucher_date: formattedDate || createFreshForm().voucher_date,
         notes: newData.notes || '',
       }
-      syncSelectedLedgerName()
     } else {
       form.value = createFreshForm()
-      selectedLedgerName.value = ''
     }
   },
   { immediate: true, deep: true },
-)
-
-watch(
-  () => unifiedSubLedgers.value,
-  () => {
-    syncSelectedLedgerName()
-  },
-  { deep: true },
 )
 
 const handlePaymentMethodChange = () => {
@@ -614,7 +361,6 @@ const handlePaymentMethodChange = () => {
   form.value.bank_id = null
 }
 
-// [حماية لحظة الإرسال]: نقوم بتحويل المعرّف الفرعي إلى الـ account_id المطلوب في شجرة الحسابات بالباك إند آلياً هنا
 const handleSubmit = () => {
   const submissionData = { ...form.value }
 
@@ -637,3 +383,11 @@ const handleCancel = () => {
   emit('cancel')
 }
 </script>
+
+<style scoped>
+input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+  opacity: 0.6;
+}
+</style>

@@ -90,7 +90,7 @@
             class="p-1.5 text-purple-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
             title="طباعة السند المالي المعتمد A5"
           >
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24 " stroke="currentColor">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -147,29 +147,33 @@ import AppTable from '@/components/ui/AppTable.vue'
 import AppPagination from '@/components/ui/AppPagination.vue'
 import { formatCurrency } from '@/utils/formatters'
 
-defineProps({
+const props = defineProps({
   vouchers: { type: Array, required: true },
   pagination: { type: Object, required: true },
   loading: { type: Boolean, default: false },
+  // الخاصية البنائية الجديدة لإخفاء عمود طبيعة السند ديناميكياً
+  hideTypeColumn: { type: Boolean, default: false },
 })
 
-// شحن الـ Emits رسمياً بحدث الطباعة المستهدف 'print-voucher'
 defineEmits(['page-change', 'edit-voucher', 'delete-voucher', 'row-clicked', 'print-voucher'])
 
 const authStore = useAuthStore()
 
 const tableHeaders = computed(() => {
-  const headers = [
-    { key: 'voucher_info', label: 'رقم السند المالي', class: 'w-[150px]' },
-    { key: 'type_badge', label: 'طبيعة السند' },
+  const headers = [{ key: 'voucher_info', label: 'رقم السند المالي', class: 'w-[150px]' }]
+
+  // حقن عمود "طبيعة السند" فقط إذا لم نكن مجبرين على إخفائه
+  if (!props.hideTypeColumn) {
+    headers.push({ key: 'type_badge', label: 'طبيعة السند' })
+  }
+
+  headers.push(
     { key: 'accounting_info', label: 'الحساب المالي المستهدف' },
     { key: 'fund_info', label: 'طريقة النقدية / الصندوق' },
     { key: 'financials', label: 'المبلغ الإجمالي' },
     { key: 'date_info', label: 'تاريخ السند والمنشئ' },
-  ]
-
-  // عمود الإجراءات يظهر دائماً الآن لاحتوائه على الطباعة العامة، وتتحكم أزرار الحذف والتعديل بصلاحياتها داخلياً
-  headers.push({ key: 'actions', label: 'إجراءات تخصصية', class: 'text-left min-w-[120px]' })
+    { key: 'actions', label: 'إجراءات تخصصية', class: 'text-left min-w-[120px]' },
+  )
 
   return headers
 })
