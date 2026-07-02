@@ -1,65 +1,176 @@
+<!-- src/views/dashboard/DashboardView.vue -->
 <template>
-  <div class="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
+  <div
+    class="p-4 md:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto text-text-primary relative overflow-hidden min-h-screen selection:bg-primary/30"
+  >
+    <!-- هالات توهج خلفية فخمة ومصقولة لتعزيز جمالية الواجهة الداكنة -->
     <div
-      class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-primary/10 rounded-full blur-3xl pointer-events-none"
+      class="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 rounded-full blur-[120px] pointer-events-none"
+    ></div>
+    <div
+      class="absolute top-1/3 -left-40 w-96 h-96 bg-purple-500/5 rounded-full blur-[120px] pointer-events-none"
     ></div>
 
+    <!-- شريط القيادة العلوي: العنوان وفلاتر التحكم اللحظية -->
     <div
-      class="relative z-10 space-y-6 max-w-2xl transform transition-all duration-500 hover:scale-[1.01]"
+      class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-surface-border pb-6 relative z-10"
     >
-      <div
-        class="inline-flex p-5 bg-surface-section rounded-full shadow-lg border border-surface-border text-primary animate-pulse"
-      >
-        <svg
-          class="w-16 h-16"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
+      <div>
+        <h1
+          class="text-2xl md:text-3xl font-black text-text-primary tracking-tight flex items-center gap-3"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.5"
-            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-          ></path>
-        </svg>
+          <span
+            class="w-2.5 h-7 bg-primary rounded-full shadow-[0_0_15px_rgba(var(--color-primary),0.6)]"
+          ></span>
+          لوحة الإشراف والمؤشرات الإدارية
+        </h1>
+        <p class="text-sm text-text-muted mt-1">
+          متابعة حية ودقيقة للأداء اللوجستي، خامات الطباعة، التدفقات الماليّة، وذمم المصممين
+          المستحقة.
+        </p>
       </div>
 
-      <h1 class="text-4xl font-extrabold text-text-primary tracking-tight md:text-5xl">
-        أهلاً بك في <span class="text-primary">لوحة التحكم الموحدة</span>
-      </h1>
+      <!-- مكون شريط التصفية الزمني الفرعي -->
+      <DashboardFilters :loading="loading" @filter="handleFilterChange" />
+    </div>
 
-      <p class="text-lg text-text-muted max-w-md mx-auto leading-relaxed">
-        النظام جاهز ومستقر تماماً. يمكنك الآن البدء في إدارة العمليات المالية والمحاسبية والوصول
-        للشاشات عبر القائمة الجانبية.
-      </p>
-
-      <div class="pt-4 flex justify-center gap-4">
+    <!-- حالة التحميل الفخمة (Premium Dark Skeleton Loader Grid) لحماية تجربة المستخدم -->
+    <div v-if="loading" class="space-y-6 animate-pulse relative z-10">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div
-          class="px-4 py-2 bg-surface-section border border-surface-border rounded-lg text-sm font-semibold text-text-secondary shadow-sm"
-        >
-          المستخدم الحالي:
-          <span class="text-text-primary font-bold">{{
-            authStore.user?.name || 'مدير النظام'
-          }}</span>
+          v-for="i in 4"
+          :key="i"
+          class="h-32 bg-surface-section rounded-xl border border-surface-border/60"
+        ></div>
+      </div>
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <div
+          class="xl:col-span-7 h-[500px] bg-surface-section rounded-xl border border-surface-border/60"
+        ></div>
+        <div
+          class="xl:col-span-5 h-[500px] bg-surface-section rounded-xl border border-surface-border/60"
+        ></div>
+      </div>
+    </div>
+
+    <!-- الفضاء التشغيلي الفعلي: يعرض فور اكتمال جلب البيانات ويشترط صلاحية المدير -->
+    <div v-else-if="authStore.can('dashboard.manager')" class="space-y-6 relative z-10">
+      <!-- أولاً: كروت المؤشرات اللوجستية والمالية الكبرى (KPIs) -->
+      <LogisticKpiCards :stats="stats" />
+
+      <!-- ثانياً: التوزيع الهيكلي الذكي وغير النمطي للجداول والتقارير التفصيلية -->
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        <!-- الجناح الأيمن (العريض): المصروفات التشغيلية ومديونيات العملاء اللحظية -->
+        <div class="xl:col-span-7 space-y-6 flex flex-col">
+          <!-- جدول كشف المصروفات المفصل للشهر الحالي أو النطاق المختار -->
+          <ExpensesSummaryTable :expenses="stats.expenses_summary" />
+
+          <!-- جدول مديونيات العملاء الفعليين المحدث كاشيرياً بلحظته -->
+          <CustomerDebtsTable :customers="stats.customers_summary" />
         </div>
 
-        <div
-          class="px-4 py-2 bg-surface-section border border-surface-border rounded-lg text-sm font-semibold text-text-secondary shadow-sm"
-        >
-          الحالة:
-          <span class="text-emerald-500 font-bold flex inline-flex items-center gap-1">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> متصل بنجاح
-          </span>
+        <!-- الجناح الأيسر: ذمم المصممين، مراقبة النواقص، وتقرير استهلاك الخامات الشامل -->
+        <div class="xl:col-span-5 space-y-6 flex flex-col">
+          <!-- جدول كشف عمولات ومستحقات المصممين الصافية -->
+          <DesignerLedgerTable :designers="stats.designers_summary" />
+
+          <!-- جدول رادار تنبيهات الخامات والأصناف التي بلغت حد الطلب بأمان -->
+          <ReorderAlertsTable :items="stats.reorder_level_items" />
+
+          <!-- جدول تقرير معدلات استهلاك خامات ومواد الطباعة الكلي المحدث -->
+          <MaterialConsumptionTable :items="stats.top_items_by_meters" />
         </div>
+      </div>
+    </div>
+
+    <!-- واجهة حجب وحماية فخمة ومصقولة تظهر للمستخدم العادي بدلاً من الأرقام الحساسة -->
+    <div
+      v-else
+      class="text-center py-24 relative z-10 border border-surface-border/40 rounded-2xl bg-surface-section/30 backdrop-blur-md"
+    >
+      <div class="max-w-md mx-auto space-y-3 p-6">
+        <h2 class="text-xl font-bold text-text-primary">مرحباً بك في النظام</h2>
+        <p class="text-sm text-text-muted leading-relaxed">
+          تمت المصادقة على دخولك بنجاح. لوحة المؤشرات الإحصائية والمالية الشاملة مخصصة حصراً للإدارة
+          العليا والمدير العام.
+        </p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
+import dashboardService from '@/services/dashboardService'
 import { useAuthStore } from '@/stores/authStore'
 
+// استيراد مكونات الشاشة الفرعية المفككة لضمان النظافة المعمارية وسهولة الصيانة
+import DashboardFilters from './components/DashboardFilters.vue'
+import LogisticKpiCards from './components/LogisticKpiCards.vue'
+import ReorderAlertsTable from './components/ReorderAlertsTable.vue'
+import ExpensesSummaryTable from './components/ExpensesSummaryTable.vue'
+import CustomerDebtsTable from './components/CustomerDebtsTable.vue'
+import DesignerLedgerTable from './components/DesignerLedgerTable.vue'
+import MaterialConsumptionTable from './components/MaterialConsumptionTable.vue'
+
+// تهيئة متجر المصادقة لإدارة الصلاحيات محلياً
 const authStore = useAuthStore()
+
+// إدارة الحالة والتحميل للتقرير المالي واللوجستي اللحظي
+const loading = ref(true)
+const currentFilters = ref({
+  from_date: '',
+  to_date: '',
+})
+
+// الهيكل البياني الافتراضي المتوافق والمطابق تماماً لمخرجات الـ Backend المحصنة
+const stats = ref({
+  date_range: { from: '', to: '' },
+  net_square_meters: 0,
+  net_sales_amount: 0,
+  top_items_by_meters: [],
+  reorder_level_items: [],
+  operational_volume: {
+    total_sales_invoices: 0,
+    total_return_invoices: 0,
+    production_statuses: { pending: 0, processing: 0, on_hold: 0, completed: 0 },
+  },
+  expenses_summary: { list: [], grand_total: 0 },
+  customers_summary: { list: [], grand_total: 0 },
+  designers_summary: { list: [], grand_total: 0 },
+})
+
+/**
+ * المحرك المركزي الذكي لجلب مؤشرات لوحة التحكم الموحدة من الـ API
+ */
+const fetchDashboardData = async (filters = {}) => {
+  loading.value = true
+  try {
+    const response = await dashboardService.getStats(filters)
+    if (response && response.data) {
+      stats.value = response.data.data
+    }
+  } catch (error) {
+    console.error('خطأ حرجي أثناء جلب مؤشرات الإشراف المركزي للوحة التحكم:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+/**
+ * استقبال الأحداث الزمنية فور تعديل الفلتر من المكون الفرعي وإعادة البناء لحظياً
+ */
+const handleFilterChange = (newFilters) => {
+  currentFilters.value = { ...newFilters }
+  fetchDashboardData(currentFilters.value)
+}
+
+// التحفيز اللحظي والأوتوماتيكي عند فتح الشاشة مباشرة بناءً على جودة الصلاحية
+onMounted(() => {
+  if (authStore.can('dashboard.manager')) {
+    fetchDashboardData()
+  } else {
+    loading.value = false
+  }
+})
 </script>

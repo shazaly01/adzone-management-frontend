@@ -75,10 +75,12 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       // لوحة التحكم الأساسية
+      // لوحة التحكم الأساسية
       {
         path: 'dashboard',
         name: 'Dashboard',
         component: DashboardView,
+        meta: { permission: 'dashboard.view' }, // <-- أضف هذا السطر لحماية الشاشة برمجياً
       },
 
       // ==========================================

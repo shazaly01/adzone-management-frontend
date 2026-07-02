@@ -31,4 +31,9 @@ export default {
   refreshStock(payload) {
     return apiClient.post(`${resource}/refresh-stock`, payload)
   },
+
+  // [إضافة]: دالة إرسال حد الطلب للصنف بناءً على المخزن المحدد
+  updateReorderLevel(id, payload) {
+    return apiClient.put(`${resource}/${id}/reorder-level`, payload)
+  },
 }

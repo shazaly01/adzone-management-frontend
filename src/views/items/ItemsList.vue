@@ -30,8 +30,63 @@
       @page-change="handlePageChange"
       @edit-item="navigateToEditForm"
       @delete-item="openDeleteDialog"
+      @edit-reorder-level="openReorderLevelModal"
       @row-clicked="navigateToEditForm"
     />
+
+    <!-- [إضافة]: نافذة حوارية منبثقة معزولة لإدخال وتعديل حد الطلب مخصصة بالمكونات المعتمدة ونظام الباندا UI -->
+    <div
+      v-if="isReorderModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+    >
+      <div class="w-full max-w-md animate-fade-in">
+        <AppCard>
+          <div class="mb-4">
+            <h3 class="text-lg font-bold text-text-primary">ضبط حد الطلب اللوجستي</h3>
+            <p class="text-xs text-text-muted mt-1">
+              تحديد الحد الأدنى المسموح به للصنف
+              <span class="font-bold text-primary">"{{ selectedItemForReorder?.name }}"</span> داخل
+              المخزن الحالي.
+            </p>
+          </div>
+
+          <div class="space-y-4 my-2">
+            <div>
+              <label class="block text-xs font-bold text-text-secondary mb-1.5"
+                >حد الطلب المقترح (بالوحدة الصغرى:
+                {{ selectedItemForReorder?.base_unit_name }})</label
+              >
+              <AppInput
+                type="number"
+                v-model.number="reorderLevelForm.reorder_level"
+                placeholder="مثال: 10"
+                min="0"
+                :error="itemStore.validationErrors?.reorder_level?.[0]"
+              />
+            </div>
+          </div>
+
+          <div class="flex justify-end items-center gap-2 mt-5 pt-3 border-t border-surface-border">
+            <AppButton
+              type="secondary"
+              size="sm"
+              @click="closeReorderLevelModal"
+              :disabled="modalSubmitting"
+            >
+              إلغاء الأمر
+            </AppButton>
+            <AppButton
+              type="primary"
+              size="sm"
+              @click="submitReorderLevel"
+              :loading="modalSubmitting"
+            >
+              حفظ وتثبيت الحد
+            </AppButton>
+          </div>
+        </AppCard>
+      </div>
+    </div>
 
     <AppConfirmDialog
       v-model="isDeleteDialogOpen"
@@ -43,7 +98,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useItemStore } from '@/stores/itemStore'
 import { useStoreStore } from '@/stores/storeStore'
@@ -53,6 +108,8 @@ import { useToast } from 'vue-toastification'
 
 // استيراد مكونات موديول الأصناف والقطع المشتركة الموحدة للواجهة
 import AppButton from '@/components/ui/AppButton.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import AppCard from '@/components/ui/AppCard.vue'
 import ItemsFilter from './ItemsFilter.vue'
 import ItemsTable from './ItemsTable.vue'
 import AppConfirmDialog from '@/components/ui/AppConfirmDialog.vue'
@@ -72,6 +129,14 @@ const searchQuery = ref('')
 const typeFilter = ref('')
 const statusFilter = ref('')
 let searchTimeout = null
+
+// متغيرات حالة نافذة حد الطلب المنبثقة اللحظية
+const isReorderModalOpen = ref(false)
+const selectedItemForReorder = ref(null)
+const modalSubmitting = ref(false)
+const reorderLevelForm = reactive({
+  reorder_level: 0,
+})
 
 // تحديث الفلاتر المحلية وجلب البيانات الفورية بناءً على التغيير
 const updateStoreId = (val) => {
@@ -104,7 +169,6 @@ const onSearch = () => {
 
 // دالة جلب البيانات من الـ API وتحديث المؤشرات الشجرية بناءً على الفلاتر النظيفة
 const handlePageChange = (page = 1) => {
-  // كسر التنفيذ وحماية الطلب في حال عدم تعيين معرف المخزن لتفادي استجابة الخطأ من السيرفر
   if (!storeId.value) return
 
   const filters = {
@@ -138,6 +202,45 @@ onMounted(async () => {
   // تنفيذ جلب الأصناف بناءً على الحالة الافتراضية المستقرة للمخزن
   handlePageChange()
 })
+
+// --- معالجات إدارة وحفظ نافذة حد الطلب المنبثقة اللحظية ---
+const openReorderLevelModal = (item) => {
+  selectedItemForReorder.value = item
+  reorderLevelForm.reorder_level = item.reorder_level ?? 0
+  isReorderModalOpen.value = true
+}
+
+const closeReorderLevelModal = () => {
+  isReorderModalOpen.value = false
+  selectedItemForReorder.value = null
+  itemStore.validationErrors = null
+}
+
+const submitReorderLevel = async () => {
+  if (!selectedItemForReorder.value) return
+
+  modalSubmitting.value = true
+  try {
+    await itemStore.updateItemReorderLevel(selectedItemForReorder.value.id, {
+      store_id: Number(storeId.value),
+      reorder_level: Number(reorderLevelForm.reorder_level),
+    })
+
+    toast.success(`تم تثبيت حد الطلب بنجاح للصنف "${selectedItemForReorder.value.name}".`)
+
+    // مزامنة القيمة داخل مصفوفة الجدول فوراً بالواجهة دون الحاجة لإعادة شحن الشبكة بالكامل بالـ API
+    const targetItem = items.value.find((i) => i.id === selectedItemForReorder.value.id)
+    if (targetItem) {
+      targetItem.reorder_level = reorderLevelForm.reorder_level
+    }
+
+    closeReorderLevelModal()
+  } catch {
+    toast.error(itemStore.error || 'عفواً، فشل تحديث حد الطلب، يرجى مراجعة قيم المدخلات.')
+  } finally {
+    modalSubmitting.value = false
+  }
+}
 
 // --- توجيه المسارات إلى الشاشات الكاملة (Full Page Form) ---
 const navigateToCreateForm = () => {

@@ -1,4 +1,3 @@
-//src\stores\itemStore.js
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import itemService from '@/services/itemService'
@@ -148,6 +147,26 @@ export const useItemStore = defineStore('item', () => {
     }
   }
 
+  // [إضافة]: تحديث حد الطلب للصنف ومزامنة الأخطاء الخاصة بالعملية
+  async function updateItemReorderLevel(id, payload) {
+    loading.value = true
+    error.value = null
+    validationErrors.value = null
+    try {
+      const response = await itemService.updateReorderLevel(id, payload)
+      return response.data
+    } catch (err) {
+      if (err.response?.status === 422) {
+        validationErrors.value = err.response.data.errors
+      }
+      error.value = err.response?.data?.message || 'فشل في تحديث حد الطلب للصنف بالمخزن.'
+      console.error(err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     items,
     pagination,
@@ -163,5 +182,6 @@ export const useItemStore = defineStore('item', () => {
     updateItem,
     deleteItem,
     refreshItemsStock,
+    updateItemReorderLevel, // تصدير الـ Action الجديد للاستخدام بالـ Components
   }
 })
