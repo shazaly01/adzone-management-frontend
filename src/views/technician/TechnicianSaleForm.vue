@@ -373,8 +373,7 @@ onMounted(async () => {
       await itemStore.fetchItems(1, {
         is_active: 1,
         store_id: currentStoreId,
-        per_page: 500,
-        all: 1, // 🌟 [التحديث الجديد]: جلب كمية كبيرة من خامات ومواد الورشة لضمان شحن القائمة بالكامل
+        all: 1, //
       })
 
       // 3. بناء مصفوفة السطور التفاعلية بعد ضمان اكتمال جلب الفاتورة والأصناف
