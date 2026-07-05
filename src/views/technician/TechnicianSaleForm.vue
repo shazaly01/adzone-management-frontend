@@ -231,6 +231,14 @@
                   style="color-scheme: dark"
                   class="w-full p-1.5 bg-[#111827] text-slate-200 border border-amber-500/30 focus:border-amber-500 rounded-md font-bold outline-none cursor-pointer text-right transition-all focus:ring-1 focus:ring-amber-500/20"
                 >
+                  <!-- 🌟 [التحديث الجديد]: خيار احتياطي يضمن ظهور اسم الصنف الحالي المخزن بالفاتورة فوراً -->
+                  <option
+                    v-if="!dimensionalItemsOnly.some((item) => item.id === row.item_id)"
+                    :value="row.item_id"
+                  >
+                    {{ row.item_name }} (الصنف الحالي بالفاتورة)
+                  </option>
+
                   <option
                     v-for="dimensionalItem in dimensionalItemsOnly"
                     :key="dimensionalItem.id"
@@ -361,7 +369,12 @@ onMounted(async () => {
       customerNameText.value = technicianSaleStore.currentSale.customer_name_text || null
 
       // 2. شحن دليل الأصناف من النظام مع تمرير المخزن لحساب الأرصدة ومنع خطأ التحقق
-      await itemStore.fetchItems(1, { is_active: 1, store_id: currentStoreId })
+      // 2. شحن دليل الأصناف من النظام مع تمرير المخزن لحساب الأرصدة ومنع خطأ التحقق
+      await itemStore.fetchItems(1, {
+        is_active: 1,
+        store_id: currentStoreId,
+        per_page: 500, // 🌟 [التحديث الجديد]: جلب كمية كبيرة من خامات ومواد الورشة لضمان شحن القائمة بالكامل
+      })
 
       // 3. بناء مصفوفة السطور التفاعلية بعد ضمان اكتمال جلب الفاتورة والأصناف
       items.value = technicianSaleStore.currentSale.items.map((it) => {
