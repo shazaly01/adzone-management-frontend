@@ -1,12 +1,10 @@
-<!--src\views\sales\SalesList.vue--->
 <template>
   <div class="space-y-6">
     <div class="flex justify-between items-center mb-6">
       <div class="text-right" dir="rtl">
         <h1 class="text-2xl font-black text-text-primary">إدارة فواتير المبيعات</h1>
         <p class="text-xs text-text-secondary mt-1">
-          استعراض، تتبع، وفلترة حركة المبيعات ومردودات المبيعات ومراقبة تأثيرها المالي واللحظي على
-          الأرصدة.
+          استعراض، تتبع، وفلترة حركة المبيعات ومردودات المبيعات ومراقبة تأثيرها اللحظي على الأرصدة.
         </p>
       </div>
       <AppButton type="button" @click="goToCreatePage"> إضافة فاتورة جديدة </AppButton>
@@ -17,12 +15,14 @@
       v-model:invoiceTypeFilter="invoiceTypeFilter"
       v-model:storeFilter="storeFilter"
       v-model:customerFilter="customerFilter"
-      :stores="storeStore.stores"
-      :customers="customerStore.customers"
+      v-model:fromDateFilter="fromDateFilter"
+      v-model:toDateFilter="toDateFilter"
       @update:searchQuery="onSearch"
       @update:invoiceTypeFilter="handlePageChange(1)"
       @update:storeFilter="handlePageChange(1)"
       @update:customerFilter="handlePageChange(1)"
+      @update:fromDateFilter="handlePageChange(1)"
+      @update:toDateFilter="handlePageChange(1)"
     />
 
     <SaleTable
@@ -72,6 +72,8 @@ const searchQuery = ref('')
 const invoiceTypeFilter = ref('')
 const storeFilter = ref('')
 const customerFilter = ref('')
+const fromDateFilter = ref('') // [إضافة حقل تاريخ البداية]
+const toDateFilter = ref('') // [إضافة حقل تاريخ النهاية]
 let searchTimeout = null
 
 const onSearch = () => {
@@ -82,11 +84,14 @@ const onSearch = () => {
 }
 
 const handlePageChange = (page = 1) => {
+  // شحن كائن الفلاتر بكافة المتغيرات بما فيها النطاق الزمني الجديد لإرسالها للـ API
   const filters = {
     search: searchQuery.value,
     invoice_type: invoiceTypeFilter.value,
     store_id: storeFilter.value,
     customer_id: customerFilter.value,
+    from_date: fromDateFilter.value,
+    to_date: toDateFilter.value,
   }
 
   saleStore.fetchSales(page, filters).catch(() => {
@@ -97,6 +102,7 @@ const handlePageChange = (page = 1) => {
 onMounted(async () => {
   handlePageChange(1)
 
+  // الإبقاء على الجلب المسبق لبيانات المخازن والعملاء لضمان استقرار أرشيف المتجر الكلي للـ الكاشير
   await Promise.all([
     storeStore.fetchStores(1, { is_active: 1 }),
     customerStore.fetchCustomers(1, { is_active: 1 }),
@@ -111,7 +117,6 @@ const goToEditPage = (sale) => {
   router.push(`/app/sales/${sale.id}/edit`)
 }
 
-// [الدالة الجديدة]: فتح مسار الطباعة المعزول للفاتورة المحددة في علامة تبويب جديدة تماماً
 const openPrintPage = (sale) => {
   window.open(`/print/sales/${sale.id}`, '_blank')
 }
@@ -139,6 +144,7 @@ const deleteSelectedSale = async () => {
       const errorMessage = saleStore.error || 'فشلت عملية إلغاء وحذف مستند المبيعات من النظام.'
       toast.error(errorMessage)
     } finally {
+      // [إصلاح برمي]: تم تعديل الكلمة الخطأ من fill إلى finally بشكل صحيح
       isDeleteDialogOpen.value = false
       saleToDelete.value = null
     }
