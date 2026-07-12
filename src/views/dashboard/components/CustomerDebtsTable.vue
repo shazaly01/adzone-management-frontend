@@ -1,3 +1,4 @@
+<!--src\views\dashboard\components\CustomerDebtsTable.vue--->
 <template>
   <AppCard class="flex flex-col h-full">
     <!-- رأس الكرت: العنوان والمؤشرات العليا للعملاء -->

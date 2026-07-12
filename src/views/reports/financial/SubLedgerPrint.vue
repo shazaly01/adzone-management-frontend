@@ -3,6 +3,7 @@
     class="print-container min-h-screen bg-slate-50 text-slate-800 p-6 relative flex flex-col justify-between"
     dir="rtl"
   >
+    <!-- مؤشر التحميل البصري قبل بدء الطباعة -->
     <div v-if="loading" class="flex flex-col items-center justify-center flex-1 no-print">
       <div class="relative w-16 h-16">
         <div
@@ -10,10 +11,11 @@
         ></div>
       </div>
       <p class="text-sm text-slate-600 mt-6 font-bold tracking-wide animate-pulse">
-        جاري تحضير مستند كشف الحساب للطباعة الصافية...
+        جاري تحضير مستند كشف الحساب للطباعة الصافية بالعرض...
       </p>
     </div>
 
+    <!-- كرت معالجة الأخطاء في حال فقدان حزمة البيانات -->
     <div
       v-else-if="error || !printData"
       class="p-8 text-center max-w-md mx-auto my-20 bg-white border border-slate-200 shadow-sm no-print"
@@ -34,17 +36,20 @@
       </button>
     </div>
 
+    <!-- صندوق الحاوية الرئيسي ممتد ليتناسب مع قياسات الـ Landscape العرضية -->
     <div
       v-else
-      class="invoice-box max-w-[21cm] mx-auto bg-white border border-slate-300 overflow-hidden relative flex flex-col justify-between flex-1 w-full"
+      class="invoice-box max-w-[29.7cm] mx-auto bg-white border border-slate-300 overflow-hidden relative flex flex-col justify-between flex-1 w-full"
     >
       <div class="flex-1 flex flex-col">
+        <!-- الشريط الجمالي العلوي التابع للهوية المؤسسية -->
         <div class="w-full flex h-3.5 overflow-hidden no-print">
           <div class="w-8/12 bg-indigo-600"></div>
           <div class="w-1/12 bg-amber-400"></div>
           <div class="w-3/12 bg-slate-700"></div>
         </div>
 
+        <!-- الهيدر الرئيسي للشركة والبيانات التشغيلية للتقرير -->
         <div class="p-8 flex justify-between items-center gap-6 border-b border-slate-200 relative">
           <div class="flex items-center gap-5">
             <div
@@ -76,36 +81,38 @@
           <div class="text-right space-y-2 min-w-[280px]">
             <div class="bg-slate-50 text-right px-4 py-2 border-r-4 border-indigo-600">
               <h1 class="text-sm font-black tracking-wide text-slate-900">
-                كشف حساب الكيانات المساعدة
+                كشف حساب الكيانات المساعدة التفصيلي
               </h1>
             </div>
             <div class="px-2 space-y-1 text-xs text-slate-600 font-medium">
               <p class="flex justify-between items-center">
-                <span>تاريخ الطباعة:</span>
+                <span>تاريخ ووقت الطباعة:</span>
                 <span class="font-mono font-bold text-slate-900">{{ currentTimestamp }}</span>
               </p>
             </div>
           </div>
         </div>
 
-        <div class="px-8 py-6">
+        <!-- بطاقة عنوان وعقد الحساب المساعد الخاضع للتدقيق والمطابقة -->
+        <div class="p-8 pb-4">
           <div class="grid grid-cols-1 text-xs bg-slate-50 p-4 border border-slate-200 relative">
             <div class="absolute top-0 bottom-0 right-0 w-1 bg-indigo-600"></div>
             <div class="space-y-1 text-right">
-              <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block"
-                >الحساب المساعد الجاري تدقيقه</span
-              >
-              <p class="font-black text-slate-900 text-base">
+              <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">
+                الحساب المساعد الجاري تدقيقه
+              </span>
+              <p class="font-black text-slate-900 text-lg">
                 {{ printData.grandSummary.title_override || 'حساب مساعد مورفي فرعي' }}
               </p>
             </div>
           </div>
         </div>
 
+        <!-- شبكة الإجماليات والمطابقة المالية الممتدة عرضياً للتقرير -->
         <div class="px-8 pb-6 grid grid-cols-4 gap-4 text-right">
           <div class="p-3 border border-slate-200 bg-slate-50/50">
             <div class="text-[10px] text-slate-500 font-bold mb-1">الرصيد الافتتاحي السابق</div>
-            <div class="text-sm font-black font-mono text-slate-900">
+            <div class="text-base font-black font-mono text-slate-900">
               {{ formatCurrency(printData.grandSummary.grand_total_contract_value) }}
             </div>
           </div>
@@ -113,38 +120,42 @@
             <div class="text-[10px] text-emerald-600 font-bold mb-1">
               إجمالي الحركات المدينة (+)
             </div>
-            <div class="text-sm font-black font-mono text-emerald-600">
+            <div class="text-base font-black font-mono text-emerald-600">
               {{ formatCurrency(printData.grandSummary.grand_total_due_value) }}
             </div>
           </div>
           <div class="p-3 border border-slate-200 bg-slate-50/50">
             <div class="text-[10px] text-rose-600 font-bold mb-1">إجمالي الحركات الدائنة (-)</div>
-            <div class="text-sm font-black font-mono text-rose-600">
+            <div class="text-base font-black font-mono text-rose-600">
               {{ formatCurrency(printData.grandSummary.grand_total_paid) }}
             </div>
           </div>
           <div class="p-3 border border-indigo-200 bg-indigo-50/20">
             <div class="text-[10px] text-indigo-600 font-bold mb-1">صافي رصيد الحساب الجاري</div>
-            <div class="text-sm font-black font-mono text-indigo-600">
+            <div class="text-base font-black font-mono text-indigo-600">
               {{ formatCurrency(printData.grandSummary.grand_total_remaining) }}
             </div>
           </div>
         </div>
 
+        <!-- جدول تفاصيل الحركات المالية المطور والموسع بالكامل لمنع التفاف الأرقام والبيانات -->
         <div class="px-8 pb-4 flex-1">
           <div class="border border-slate-300 overflow-hidden bg-white">
-            <table class="w-full text-right border-collapse text-xs">
+            <table class="w-full text-right border-collapse text-xs table-fixed">
               <thead>
                 <tr class="bg-slate-100 text-slate-800 font-black border-b border-slate-300">
-                  <th class="p-2.5 text-center w-12 text-slate-900 border-l border-slate-200">#</th>
-                  <th class="p-2.5 text-center w-24 border-l border-slate-200">تاريخ الحركة</th>
-                  <th class="p-2.5 border-l border-slate-200">الحساب المقابل</th>
-                  <th class="p-2.5 border-l border-slate-200">
+                  <th class="p-2.5 text-center w-[4%] text-slate-900 border-l border-slate-200">
+                    #
+                  </th>
+                  <th class="p-2.5 text-center w-[12%] border-l border-slate-200">تاريخ الحركة</th>
+                  <th class="p-2.5 border-l border-slate-200 w-[15%]">الحساب المقابل</th>
+                  <th class="p-2.5 border-l border-slate-200 w-[35%]">
                     شرح الحركة والبيان الجاري التفصيلي
                   </th>
-                  <th class="p-2.5 text-center w-28 border-l border-slate-200">مدين (+)</th>
-                  <th class="p-2.5 text-center w-28 border-l border-slate-200">دائن (-)</th>
-                  <th class="p-2.5 text-left w-32 text-slate-900">الرصيد التراكمي</th>
+                  <!-- تكبير عرض أعمدة المبالغ لإتاحة مساحة مريحة للأرقام الضخمة -->
+                  <th class="p-2.5 text-center w-[11%] border-l border-slate-200">مدين (+)</th>
+                  <th class="p-2.5 text-center w-[11%] border-l border-slate-200">دائن (-)</th>
+                  <th class="p-2.5 text-left w-[12%] text-slate-900">الرصيد التراكمي</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-200">
@@ -158,31 +169,39 @@
                   >
                     {{ index + 1 }}
                   </td>
-                  <td class="p-2.5 text-center font-mono text-slate-700 border-l border-slate-200">
+                  <td
+                    class="p-2.5 text-center font-mono text-slate-700 border-l border-slate-200 whitespace-nowrap overflow-hidden text-ellipsis"
+                  >
                     {{ line.license_number ?? '-' }}
                   </td>
-                  <td class="p-2.5 font-bold text-slate-800 border-l border-slate-200">
+                  <td class="p-2.5 font-bold text-slate-800 border-l border-slate-200 truncate">
                     {{ line.projects_count ?? '-' }}
                   </td>
-                  <td class="p-2.5 text-slate-600 text-[11px] border-l border-slate-200">
+                  <td
+                    class="p-2.5 text-slate-600 text-[11px] border-l border-slate-200 truncate"
+                    :title="line.name"
+                  >
                     {{ line.name }}
                   </td>
+                  <!-- عرض رقمي نقي خالي تماماً من كلمة "جنيه" لحماية التنسيق البصري من التداخل -->
                   <td
-                    class="p-2.5 text-center font-mono font-bold text-emerald-600 border-l border-slate-200 bg-slate-50/10"
+                    class="p-2.5 text-center font-mono font-bold text-emerald-600 border-l border-slate-200 bg-slate-50/10 whitespace-nowrap"
                   >
                     {{
                       line.total_contract_value > 0
-                        ? formatCurrency(line.total_contract_value)
+                        ? formatNumberOnly(line.total_contract_value)
                         : '-'
                     }}
                   </td>
                   <td
-                    class="p-2.5 text-center font-mono font-bold text-rose-600 border-l border-slate-200"
+                    class="p-2.5 text-center font-mono font-bold text-rose-600 border-l border-slate-200 whitespace-nowrap"
                   >
-                    {{ line.total_due_value > 0 ? formatCurrency(line.total_due_value) : '-' }}
+                    {{ line.total_due_value > 0 ? formatNumberOnly(line.total_due_value) : '-' }}
                   </td>
-                  <td class="p-2.5 text-left font-mono font-black text-slate-900 bg-slate-50/30">
-                    {{ formatCurrency(line.total_remaining) }}
+                  <td
+                    class="p-2.5 text-left font-mono font-black text-slate-900 bg-slate-50/30 whitespace-nowrap"
+                  >
+                    {{ formatNumberOnly(line.total_remaining) }}
                   </td>
                 </tr>
               </tbody>
@@ -190,7 +209,8 @@
           </div>
         </div>
 
-        <div class="px-8 pt-8 pb-4 grid grid-cols-2 gap-6 text-center text-xs text-slate-500">
+        <!-- كتل التواقيع والاعتماد المحاسبي المالي للشركة -->
+        <div class="px-8 pt-6 pb-4 grid grid-cols-2 gap-6 text-center text-xs text-slate-500">
           <div class="space-y-3">
             <p class="font-bold text-slate-700">المراجع المالي المدقق</p>
             <div class="border-b border-dashed border-slate-300 mx-auto w-36 pt-2"></div>
@@ -199,46 +219,6 @@
             <p class="font-bold text-slate-700">اعتماد الإدارة الماليّة والحسابات</p>
             <div class="border-b border-dashed border-slate-300 mx-auto w-36 pt-2"></div>
           </div>
-        </div>
-      </div>
-
-      <div class="relative w-full overflow-hidden mt-6 -mb-px">
-        <div
-          class="bg-slate-900 text-white px-8 pt-4 pb-5 text-xs font-medium w-full border-t border-slate-800"
-        >
-          <div class="grid grid-cols-3 gap-6 max-w-4xl mx-auto text-center items-center">
-            <div
-              class="flex flex-col items-center justify-center space-y-1 border-l border-white/10 px-2 h-full"
-            >
-              <span class="opacity-75 text-[10px] font-bold tracking-wider"
-                >📍 الموقـع الرئيسي</span
-              >
-              <span class="font-bold tracking-wide">السودان - امدرمان</span>
-            </div>
-
-            <div
-              class="flex flex-col items-center justify-center space-y-1 border-l border-white/10 px-2 h-full"
-            >
-              <span class="opacity-75 text-[10px] font-bold tracking-wider">📞 قنوات الاتصال</span>
-              <span class="font-mono font-black text-sm tracking-widest">0500000000</span>
-            </div>
-
-            <div class="flex flex-col items-center justify-center space-y-1 px-2 h-full">
-              <span class="opacity-85 text-[10px] font-bold tracking-wider"
-                >📄 الرقم الضريبي للمنشأة</span
-              >
-              <div class="bg-white/5 px-3 py-0.5 border border-white/10 shadow-inner mt-0.5">
-                <span class="font-mono font-black tracking-widest text-amber-100 text-xs"
-                  >300000000000003</span
-                >
-              </div>
-            </div>
-          </div>
-
-          <p class="text-center text-[10px] opacity-65 mt-4 font-medium tracking-wide">
-            مستند كشف حساب مالي تفصيلي معتمد تم إنشاؤه إلكترونياً وصالح للمراجعة القانونية
-            والتشغيلية
-          </p>
         </div>
       </div>
     </div>
@@ -258,6 +238,15 @@ const closeWindow = () => {
   window.close()
 }
 
+// دالة تفريغ المبالغ رقمياً فقط دون إضافة لواحق نصية لحماية الجدول من الالتفاف والتداخل
+const formatNumberOnly = (value) => {
+  if (value === null || value === undefined || isNaN(value)) return '-'
+  return Number(value).toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
+}
+
 const triggerBrowserPrint = () => {
   setTimeout(() => {
     window.print()
@@ -265,12 +254,10 @@ const triggerBrowserPrint = () => {
 }
 
 onMounted(() => {
-  // توليد الطابع الزمني والوقت الحالي للطباعة
   const now = new Date()
   currentTimestamp.value = now.toLocaleString('ar-EG', { hour12: true })
 
   try {
-    // جلب وحل حزمة البيانات المخزنة من شاشة كشف الحساب
     const rawData = sessionStorage.getItem('printData')
     if (rawData) {
       printData.value = JSON.parse(rawData)
@@ -291,6 +278,11 @@ onMounted(() => {
 
 <style scoped>
 @media print {
+  @page {
+    size: A4 landscape;
+    margin: 0.6cm;
+  }
+
   .no-print {
     display: none !important;
   }
@@ -335,5 +327,11 @@ onMounted(() => {
 .logo-container {
   min-width: 6rem;
   min-height: 6rem;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

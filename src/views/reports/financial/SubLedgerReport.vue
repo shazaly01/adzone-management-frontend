@@ -38,7 +38,15 @@
         </template>
 
         <template #cell-entry_number="{ item }">
-          <span class="font-mono text-cyan-400 text-xs font-bold">
+          <span
+            v-if="item.source_type && item.source_id"
+            @click="openSourceDocument(item)"
+            class="font-mono text-cyan-400 text-xs font-bold cursor-pointer hover:text-cyan-300 hover:underline flex items-center gap-1"
+            title="اضغط لعرض المستند الأصلي"
+          >
+            {{ item.entry_number ?? '-' }}
+          </span>
+          <span class="font-mono text-gray-500 text-xs" v-else>
             {{ item.entry_number ?? '-' }}
           </span>
         </template>
@@ -74,22 +82,29 @@
         </template>
       </AppTable>
     </AppCard>
+
+    <!-- نافذة التأصيل المستندي المعزولة والذكية -->
+    <SourceDocumentModal
+      :is-open="isModalOpen"
+      :source-type="activeSourceType"
+      :source-id="activeSourceId"
+      :entry-number="activeEntryNumber"
+      @close="closeModal"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { formatCurrency } from '@/utils/formatters'
 import { PrinterIcon } from '@heroicons/vue/24/outline'
 
 import { useReportStore } from '@/stores/reportStore'
-import { useCustomerStore } from '@/stores/customerStore'
-import { useSupplierStore } from '@/stores/supplierStore'
-import { useBankStore } from '@/stores/bankStore'
-import { useTreasuryStore } from '@/stores/treasuryStore'
-import { useUserStore } from '@/stores/userStore'
+// استدعاء الـ Composable والـ Component المساعدين من المجلد المخصص
+import { useSubLedgerInfrastructure } from './components/useSubLedgerInfrastructure'
+import SourceDocumentModal from './components/SourceDocumentModal.vue'
 
 import SubLedgerFilterCard from './components/SubLedgerFilterCard.vue'
 import SubLedgerSummaryCards from './components/SubLedgerSummaryCards.vue'
@@ -99,120 +114,20 @@ import AppTable from '@/components/ui/AppTable.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 
 const router = useRouter()
-
 const reportStore = useReportStore()
-const customerStore = useCustomerStore()
-const supplierStore = useSupplierStore()
-const bankStore = useBankStore()
-const treasuryStore = useTreasuryStore()
-const userStore = useUserStore()
 
-const { customers, loading: customersLoading } = storeToRefs(customerStore)
-const { suppliers, loading: suppliersLoading } = storeToRefs(supplierStore)
-const { banks, loading: banksLoading } = storeToRefs(bankStore)
-const { treasuries, loading: treasuriesLoading } = storeToRefs(treasuryStore)
-const { users: designers, loading: designersLoading } = storeToRefs(userStore)
-
+// امتصاص منطق المتاجر الخمسة والتحميل المسبق عبر الـ Composable المعزول
+const { unifiedSubLedgers, isDataLoading } = useSubLedgerInfrastructure()
 const { subLedgerList, subLedgerSummary, loading } = storeToRefs(reportStore)
 
 const currentFetchedFilters = ref(null)
 
-const isDataLoading = computed(() => {
-  return (
-    customersLoading.value ||
-    suppliersLoading.value ||
-    banksLoading.value ||
-    treasuriesLoading.value ||
-    designersLoading.value
-  )
-})
+// متغيرات حالة التحكم بنافذة العرض المنبثقة
+const isModalOpen = ref(false)
+const activeSourceType = ref('')
+const activeSourceId = ref('')
+const activeEntryNumber = ref('')
 
-onMounted(async () => {
-  try {
-    const promises = []
-
-    if (customers.value.length === 0)
-      promises.push(customerStore.fetchCustomers(1, { per_page: 1000 }))
-    if (suppliers.value.length === 0)
-      promises.push(supplierStore.fetchSuppliers(1, { per_page: 1000 }))
-    if (banks.value.length === 0) promises.push(bankStore.fetchBanks(1, { per_page: 1000 }))
-    if (treasuries.value.length === 0)
-      promises.push(treasuryStore.fetchTreasuries(1, { per_page: 1000 }))
-
-    if (designers.value.length === 0) {
-      promises.push(userStore.fetchUsers(1, { type: 'designer', per_page: 1000 }))
-    }
-
-    if (promises.length > 0) {
-      await Promise.all(promises)
-    }
-  } catch (err) {
-    console.error('Failed to pre-load all sub-ledger infrastructure entries for report view:', err)
-  }
-})
-
-const unifiedSubLedgers = computed(() => {
-  const list = []
-
-  customers.value.forEach((item) => {
-    list.push({
-      composite_key: `customer:${item.id}`,
-      id: item.id,
-      type: 'App\\Models\\Customer',
-      name: item.name,
-      displayType: 'عميل',
-      badgeClass: 'bg-blue-900/40 text-blue-400 border-blue-800/60',
-    })
-  })
-
-  suppliers.value.forEach((item) => {
-    list.push({
-      composite_key: `supplier:${item.id}`,
-      id: item.id,
-      type: 'App\\Models\\Supplier',
-      name: item.name,
-      displayType: 'مورد',
-      badgeClass: 'bg-amber-900/40 text-amber-400 border-amber-800/60',
-    })
-  })
-
-  banks.value.forEach((item) => {
-    list.push({
-      composite_key: `bank:${item.id}`,
-      id: item.id,
-      type: 'App\\Models\\Bank',
-      name: item.name,
-      displayType: 'بنك/محفظة',
-      badgeClass: 'bg-indigo-900/40 text-indigo-400 border-indigo-800/60',
-    })
-  })
-
-  treasuries.value.forEach((item) => {
-    list.push({
-      composite_key: `treasury:${item.id}`,
-      id: item.id,
-      type: 'App\\Models\\Treasury',
-      name: item.name,
-      displayType: 'خزنة مالية',
-      badgeClass: 'bg-emerald-900/40 text-emerald-400 border-emerald-800/60',
-    })
-  })
-
-  designers.value.forEach((item) => {
-    list.push({
-      composite_key: `designer:${item.id}`,
-      id: item.id,
-      type: 'App\\Models\\User',
-      name: item.full_name,
-      displayType: 'مصمم/مساعد',
-      badgeClass: 'bg-purple-900/40 text-purple-400 border-purple-800/60',
-    })
-  })
-
-  return list
-})
-
-// [حقن هندسي راديكالي]: دالة احتساب الإجماليات تلقائياً وبأعلى دقة من واقع أسطر الجدول لحل مشكلة قصور كائن الـ API
 const derivedSummary = computed(() => {
   const lines = subLedgerList.value || []
   const opening = Number(subLedgerSummary.value?.opening_balance) || 0
@@ -220,7 +135,6 @@ const derivedSummary = computed(() => {
   const totalDebit = lines.reduce((sum, line) => sum + (Number(line.debit) || 0), 0)
   const totalCredit = lines.reduce((sum, line) => sum + (Number(line.credit) || 0), 0)
 
-  // الرصيد الختامي هو الرصيد التراكمي لآخر سطر في الجدول، وإذا كان الجدول فارغاً يساوي الافتتاحي
   const closing = lines.length > 0 ? Number(lines[lines.length - 1].running_total) || 0 : opening
 
   return {
@@ -241,6 +155,22 @@ const tableHeaders = [
   { key: 'credit', label: 'دائن (-)' },
   { key: 'running_total', label: 'الرصيد التراكمي' },
 ]
+
+function openSourceDocument(item) {
+  if (!item.source_type || !item.source_id) return
+
+  activeSourceType.value = item.source_type
+  activeSourceId.value = item.source_id
+  activeEntryNumber.value = item.entry_number ?? '-'
+  isModalOpen.value = true
+}
+
+function closeModal() {
+  isModalOpen.value = false
+  activeSourceType.value = ''
+  activeSourceId.value = ''
+  activeEntryNumber.value = ''
+}
 
 const handleFetch = (cleanFilters) => {
   currentFetchedFilters.value = cleanFilters
@@ -266,7 +196,6 @@ const handlePrint = () => {
     'printData',
     JSON.stringify({
       grandSummary: {
-        // ترحيل البيانات المحسوبة ديناميكياً بدقة متناهية إلى شاشة الطباعة الصافية
         grand_total_contract_value: derivedSummary.value.opening_balance,
         grand_total_due_value: derivedSummary.value.total_period_debit,
         grand_total_paid: derivedSummary.value.total_period_credit,
@@ -294,7 +223,6 @@ const handlePrint = () => {
 </script>
 
 <script>
-// تعيين اتجاه الخطوط الافتراضية للجداول
 export default {
   name: 'SubLedgerReport',
 }
