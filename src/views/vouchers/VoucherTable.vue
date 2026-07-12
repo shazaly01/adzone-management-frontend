@@ -1,3 +1,4 @@
+<!--src\views\vouchers\VoucherTable.vue--->
 <template>
   <AppCard>
     <AppTable
@@ -39,11 +40,16 @@
 
       <template #cell-accounting_info="{ item }">
         <div class="flex flex-col justify-center">
-          <span class="font-medium text-sm text-text-primary">
-            {{ item.account_name || '-' }}
+          <!-- العنوان الرئيسي: يظهر اسم الحساب المساعد الفعلي (عميل/مورد/مصروف) مباشرة -->
+          <span class="font-bold text-sm text-text-primary">
+            {{ item.sub_ledger_name || item.account_name || '-' }}
           </span>
-          <span v-if="item.sub_ledger_name" class="text-xs text-blue-600 font-bold mt-0.5">
-            حساب فرعي: {{ item.sub_ledger_name }}
+          <!-- العنوان الفرعي: يظهر الحساب التجميعي بالأسفل كمرجع محاسبي خفيف إذا كان الحساب المساعد معروضاً -->
+          <span
+            v-if="item.sub_ledger_name && item.account_name"
+            class="text-[11px] text-text-muted mt-0.5"
+          >
+            {{ item.account_name }}
           </span>
         </div>
       </template>
@@ -90,7 +96,7 @@
             class="p-1.5 text-purple-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
             title="طباعة السند المالي المعتمد A5"
           >
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24 " stroke="currentColor">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -151,7 +157,6 @@ const props = defineProps({
   vouchers: { type: Array, required: true },
   pagination: { type: Object, required: true },
   loading: { type: Boolean, default: false },
-  // الخاصية البنائية الجديدة لإخفاء عمود طبيعة السند ديناميكياً
   hideTypeColumn: { type: Boolean, default: false },
 })
 
@@ -162,7 +167,6 @@ const authStore = useAuthStore()
 const tableHeaders = computed(() => {
   const headers = [{ key: 'voucher_info', label: 'رقم السند المالي', class: 'w-[150px]' }]
 
-  // حقن عمود "طبيعة السند" فقط إذا لم نكن مجبرين على إخفائه
   if (!props.hideTypeColumn) {
     headers.push({ key: 'type_badge', label: 'طبيعة السند' })
   }
