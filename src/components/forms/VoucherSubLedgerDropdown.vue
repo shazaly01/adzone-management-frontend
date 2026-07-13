@@ -151,7 +151,7 @@
             @click="selectLedger(item)"
             :class="[
               'w-full text-right px-3 py-2.5 flex justify-between items-center transition-colors rounded-md text-xs font-bold',
-              props.subLedgerType === item.type && props.subLedgerId == item.id
+              normalizedSubLedgerType === item.type && props.subLedgerId == item.id
                 ? 'bg-[#e05e2b]/20 text-[#e05e2b] font-black'
                 : 'text-gray-300 hover:bg-[#25272e] hover:text-white',
             ]"
@@ -244,6 +244,11 @@ const activeTab = ref('all')
 const searchQuery = ref('')
 const selectedLedgerName = ref('')
 const searchInputRef = ref(null)
+
+// مواءمة النوع القادم من الـ API ليتوافق مع الأنواع المعرفة محلياً في الـ Component
+const normalizedSubLedgerType = computed(() => {
+  return props.subLedgerType === 'user' ? 'designer' : props.subLedgerType
+})
 
 const isDataLoading = computed(() => {
   return (
@@ -384,10 +389,11 @@ const filteredSubLedgers = computed(() => {
 })
 
 // تتبع ورصد الرصيد الحالي للكيان المختار لعرضه بشكل فوري أسفل حقل الاختيار
+// تتبع ورصد الرصيد الحالي للكيان المختار لعرضه بشكل فوري أسفل حقل الاختيار
 const currentSelectedBalance = computed(() => {
   if (!props.subLedgerType || !props.subLedgerId) return null
   const selected = unifiedSubLedgers.value.find(
-    (item) => item.type === props.subLedgerType && item.id == props.subLedgerId,
+    (item) => item.type === normalizedSubLedgerType.value && item.id == props.subLedgerId,
   )
   return selected ? selected.balance : null
 })
@@ -429,7 +435,7 @@ const selectLedger = (item) => {
 const syncSelectedLedgerName = () => {
   if (props.subLedgerType && props.subLedgerId) {
     const target = unifiedSubLedgers.value.find(
-      (item) => item.type === props.subLedgerType && item.id == props.subLedgerId,
+      (item) => item.type === normalizedSubLedgerType.value && item.id == props.subLedgerId,
     )
     if (target) {
       selectedLedgerName.value = `${target.name} (${target.displayType})`
@@ -454,6 +460,13 @@ watch(
     syncSelectedLedgerName()
   },
   { deep: true },
+)
+
+watch(
+  () => [normalizedSubLedgerType.value, props.subLedgerId],
+  () => {
+    syncSelectedLedgerName()
+  },
 )
 </script>
 
