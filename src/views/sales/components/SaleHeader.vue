@@ -1,4 +1,3 @@
-<!--src\views\sales\components\SaleHeader.vue--->
 <template>
   <div
     class="p-5 bg-[#23252e] rounded-xl border-2 border-[#5d6170] shadow-2xl space-y-4 text-right font-sans"
@@ -22,10 +21,12 @@
             </svg>
           </span>
 
+          <!-- [تأمين حركي]: قفل حقل نوع المستند لمنع تغييره أثناء معالجة المردود المباشر -->
           <select
             v-model="formData.invoice_type"
+            :disabled="!!formData.parent_id"
             style="color-scheme: dark"
-            class="block w-full h-full pr-10 pl-10 bg-transparent text-white focus:outline-none text-xs font-bold appearance-none cursor-pointer"
+            class="block w-full h-full pr-10 pl-10 bg-transparent text-white focus:outline-none text-xs font-bold appearance-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <option value="sale" class="bg-[#16171b]">فاتورة مبيعات نشطة</option>
             <option value="return" class="bg-[#16171b]">مردودات مبيعات</option>
@@ -56,7 +57,11 @@
               />
             </svg>
           </span>
-          <div class="w-full h-full pr-10 pl-2 flex items-center">
+          <!-- [تأمين حركي]: تعطيل المخزن لضمان عودة البضاعة المسترجعة لنفس المخزن الأصلي -->
+          <div
+            class="w-full h-full pr-10 pl-2 flex items-center"
+            :class="{ 'opacity-60 pointer-events-none cursor-not-allowed': !!formData.parent_id }"
+          >
             <StoresDropdown
               id="sale-store-id"
               v-model="formData.store_id"
@@ -70,7 +75,7 @@
         </p>
       </div>
 
-      <!-- invoice_date (تم نقله من الصف الثاني) -->
+      <!-- invoice_date -->
       <div class="relative w-full">
         <div
           class="relative w-full h-11 bg-[#16171b] border border-[#3e414c] rounded-lg flex items-center transition-all duration-200 hover:border-[#e05e2b]"
@@ -187,10 +192,12 @@
             </svg>
           </span>
 
+          <!-- [تأمين حركي]: قفل طريقة الدفع لضمان رد الأموال عبر نفس القناة المالية الأصلية وعكس القيد المساعد بدقة -->
           <select
             v-model="formData.payment_type"
+            :disabled="!!formData.parent_id"
             style="color-scheme: dark"
-            class="block w-full h-full pr-10 pl-10 bg-transparent text-white focus:outline-none text-xs font-bold appearance-none cursor-pointer"
+            class="block w-full h-full pr-10 pl-10 bg-transparent text-white focus:outline-none text-xs font-bold appearance-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <option value="cash" class="bg-[#16171b]">نقدي (Cash)</option>
             <option value="card" class="bg-[#16171b]">شبكة / دفع إلكتروني (Card)</option>
@@ -223,7 +230,11 @@
             </svg>
           </span>
 
-          <div class="w-full h-full pr-10 pl-2 flex items-center">
+          <!-- [تأمين حركي]: قفل حساب العميل لمنع ترحيل مبالغ المردود لحساب عميل آخر بالخطأ -->
+          <div
+            class="w-full h-full pr-10 pl-2 flex items-center"
+            :class="{ 'opacity-60 pointer-events-none cursor-not-allowed': !!formData.parent_id }"
+          >
             <CustomersDropdown
               id="sale-customer-id"
               v-model="formData.customer_id"
@@ -242,8 +253,10 @@
 
       <!-- sale_type (أزرار راديو) -->
       <div class="relative w-full">
+        <!-- [تأمين حركي]: قفل خيارات نوع حركة البيع لوجستياً -->
         <div
           class="relative w-full h-11 bg-[#16171b] border border-[#3e414c] rounded-lg flex items-center px-3 gap-2 transition-all duration-200 hover:border-[#e05e2b]"
+          :class="{ 'opacity-60 pointer-events-none cursor-not-allowed': !!formData.parent_id }"
         >
           <span class="absolute right-3 text-gray-400 pointer-events-none z-10">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -302,11 +315,13 @@
             </svg>
           </span>
 
+          <!-- [تأمين حركي]: تحويل حقل العميل الحر لوضع القراءة فقط في المردود المباشر -->
           <input
             type="text"
             v-model="formData.customer_name_text"
+            :readonly="!!formData.parent_id"
             placeholder="اسم العميل (نص حر - اختياري)"
-            class="block w-full h-full pr-10 pl-4 bg-transparent text-white focus:outline-none text-xs font-medium placeholder-gray-500"
+            class="block w-full h-full pr-10 pl-4 bg-transparent text-white focus:outline-none text-xs font-medium placeholder-gray-500 readonly:opacity-70"
           />
         </div>
         <p
@@ -319,55 +334,40 @@
     </div>
 
     <!-- حالة المرتجع: اختيار الفاتورة الأم (في صف منفصل أسفل الصفين) -->
+    <!-- [تحديث بصري]: لافتة مردود مبيعات مدمجة ونظيفة بجانب الأيقونة مباشرة -->
     <div
       v-if="formData.invoice_type === 'return'"
       class="grid grid-cols-1 gap-4 mt-2 animate-fade-in"
     >
-      <div class="relative w-full">
-        <div
-          class="relative w-full h-11 bg-[#16171b] border border-dashed border-[#e05e2b]/40 rounded-lg flex items-center"
+      <div
+        class="w-full bg-orange-950/20 border border-dashed border-[#e05e2b] rounded-lg p-3 flex items-center gap-3"
+      >
+        <span
+          class="text-[#e05e2b] bg-[#e05e2b]/10 p-2 rounded-md flex items-center justify-center shrink-0"
         >
-          <span class="absolute right-3 text-gray-400 pointer-events-none z-10">
-            <svg
-              class="w-5 h-5 text-[#e05e2b]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-              />
-            </svg>
-          </span>
-
-          <select
-            v-model="formData.parent_id"
-            :disabled="!formData.customer_id"
-            style="color-scheme: dark"
-            class="block w-full h-full pr-10 pl-10 bg-transparent text-white focus:outline-none text-xs font-bold appearance-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+        </span>
+        <div class="flex items-center gap-2 text-right">
+          <span class="text-xs font-black text-[#e05e2b]"
+            >مستند مردود مبيعات للفاتورة الأصلية المربوطة:</span
           >
-            <option :value="null" class="bg-[#16171b]">
-              {{ formData.customer_id ? 'اختر مستند البيع الأم...' : 'حدد العميل أولاً...' }}
-            </option>
-            <option
-              v-for="invoice in originalSales"
-              :key="invoice.id"
-              :value="invoice.id"
-              class="bg-[#16171b]"
-            >
-              #{{ invoice.invoice_number || invoice.id }} - {{ invoice.invoice_date.substr(0, 10) }}
-            </option>
-          </select>
-
-          <span class="absolute left-4 text-gray-500 pointer-events-none text-[10px]">▼</span>
+          <span
+            class="font-mono font-black text-xs text-white bg-[#e05e2b] px-2 py-0.5 rounded shadow-sm"
+          >
+            #{{ formData.parent_id }}
+          </span>
         </div>
-        <p v-if="getFieldError('parent_id')" class="text-rose-500 text-[10px] font-bold mt-1 pr-1">
-          {{ getFieldError('parent_id') }}
-        </p>
       </div>
+      <p v-if="getFieldError('parent_id')" class="text-rose-500 text-[10px] font-bold mt-0.5 pr-1">
+        {{ getFieldError('parent_id') }}
+      </p>
     </div>
   </div>
 </template>
@@ -406,7 +406,9 @@ const loadOriginalSales = async () => {
     }
   } else {
     originalSales.value = []
-    formData.value.parent_id = null
+    if (!formData.value.parent_id) {
+      formData.value.parent_id = null
+    }
   }
 }
 
@@ -425,7 +427,6 @@ const getFieldError = (path) => {
 onMounted(async () => {
   await customerStore.fetchCustomers(1, { is_active: 1 })
 
-  // تعيين القيم الافتراضية للحقول الجديدة إن لم تكن موجودة
   if (formData.value.sale_type === undefined) {
     formData.value.sale_type = 'indoor'
   }
@@ -440,7 +441,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* نفس التنسيقات السابقة */
 input[type='date']::-webkit-calendar-picker-indicator {
   filter: invert(1);
   cursor: pointer;

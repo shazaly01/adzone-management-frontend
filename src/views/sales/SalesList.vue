@@ -34,6 +34,7 @@
       @delete-sale="openDeleteDialog"
       @row-clicked="goToEditPage"
       @print-sale="openPrintPage"
+      @return-sale="goToReturnPage"
     />
 
     <AppConfirmDialog
@@ -72,8 +73,8 @@ const searchQuery = ref('')
 const invoiceTypeFilter = ref('')
 const storeFilter = ref('')
 const customerFilter = ref('')
-const fromDateFilter = ref('') // [إضافة حقل تاريخ البداية]
-const toDateFilter = ref('') // [إضافة حقل تاريخ النهاية]
+const fromDateFilter = ref('')
+const toDateFilter = ref('')
 let searchTimeout = null
 
 const onSearch = () => {
@@ -84,7 +85,6 @@ const onSearch = () => {
 }
 
 const handlePageChange = (page = 1) => {
-  // شحن كائن الفلاتر بكافة المتغيرات بما فيها النطاق الزمني الجديد لإرسالها للـ API
   const filters = {
     search: searchQuery.value,
     invoice_type: invoiceTypeFilter.value,
@@ -102,7 +102,6 @@ const handlePageChange = (page = 1) => {
 onMounted(async () => {
   handlePageChange(1)
 
-  // الإبقاء على الجلب المسبق لبيانات المخازن والعملاء لضمان استقرار أرشيف المتجر الكلي للـ الكاشير
   await Promise.all([
     storeStore.fetchStores(1, { is_active: 1 }),
     customerStore.fetchCustomers(1, { is_active: 1 }),
@@ -115,6 +114,11 @@ const goToCreatePage = () => {
 
 const goToEditPage = (sale) => {
   router.push(`/app/sales/${sale.id}/edit`)
+}
+
+// [التوجيه الذكي للمردود]: فتح صفحة الإنشاء مع حقن معرف الفاتورة المرجعية في الـ Query
+const goToReturnPage = (sale) => {
+  router.push(`/app/sales/create?return_from=${sale.id}`)
 }
 
 const openPrintPage = (sale) => {
@@ -144,7 +148,6 @@ const deleteSelectedSale = async () => {
       const errorMessage = saleStore.error || 'فشلت عملية إلغاء وحذف مستند المبيعات من النظام.'
       toast.error(errorMessage)
     } finally {
-      // [إصلاح برمي]: تم تعديل الكلمة الخطأ من fill إلى finally بشكل صحيح
       isDeleteDialogOpen.value = false
       saleToDelete.value = null
     }

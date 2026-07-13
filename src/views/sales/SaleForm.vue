@@ -1,3 +1,4 @@
+<!--src\views\sales\SaleForm.vue--->
 <script setup>
 import { useSaleFormLogic } from '@/composables/useSaleFormLogic'
 

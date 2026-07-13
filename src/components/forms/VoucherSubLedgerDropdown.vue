@@ -34,6 +34,17 @@
       <span class="absolute left-4 text-gray-500 pointer-events-none text-[10px]">▼</span>
     </div>
 
+    <!-- شريط عرض الرصيد اللحظي للحساب المختار أسفل خانة الاختيار مباشرة ليكون كاشفاً للمحاسب -->
+    <div
+      v-if="props.subLedgerId && currentSelectedBalance !== null"
+      class="mt-1.5 flex items-center justify-end pl-1 text-[11px] font-bold animate-fade-in"
+    >
+      <span class="text-gray-400 ml-1">الرصيد الحالي للحساب المحدد:</span>
+      <span :class="currentSelectedBalance < 0 ? 'text-rose-400' : 'text-emerald-400'">
+        {{ Number(currentSelectedBalance).toLocaleString() }} جنيه
+      </span>
+    </div>
+
     <!-- لوحة الخيارات المنسدلة (Dropdown Panel) الموحدة داكناً بنسبة 100% -->
     <div
       v-if="isDropdownOpen"
@@ -145,7 +156,15 @@
                 : 'text-gray-300 hover:bg-[#25272e] hover:text-white',
             ]"
           >
-            <span>{{ item.name }}</span>
+            <div class="flex flex-col text-right">
+              <span>{{ item.name }}</span>
+              <span
+                :class="item.balance < 0 ? 'text-rose-400' : 'text-emerald-400'"
+                class="text-[10px] font-bold mt-0.5 opacity-90"
+              >
+                الرصيد: {{ Number(item.balance).toLocaleString() }} جنيه
+              </span>
+            </div>
             <span :class="['text-[10px] px-2 py-0.5 rounded-full font-bold', item.badgeClass]">
               {{ item.displayType }}
             </span>
@@ -165,7 +184,7 @@
       v-if="validationErrors?.sub_ledger_id || validationErrors?.account_id"
       class="text-rose-500 text-[10px] font-bold mt-1 pr-1"
     >
-      يرجى تحديد حساب مستهدف صحيح من القائمة
+      رجى تحديد حساب مستهدف صحيح من القائمة
     </p>
   </div>
 </template>
@@ -276,6 +295,7 @@ const unifiedSubLedgers = computed(() => {
       type: 'expense',
       account_id: item.account_id,
       name: item.name,
+      balance: item.current_balance ?? 0,
       displayType: 'مصروف',
       badgeClass: 'bg-rose-950/40 text-rose-400 border border-rose-900/50',
     })
@@ -288,6 +308,7 @@ const unifiedSubLedgers = computed(() => {
       type: 'supplier',
       account_id: item.account_id,
       name: item.name,
+      balance: item.current_balance ?? 0,
       displayType: 'مورد',
       badgeClass: 'bg-amber-950/40 text-amber-400 border border-amber-900/50',
     })
@@ -300,6 +321,7 @@ const unifiedSubLedgers = computed(() => {
       type: 'customer',
       account_id: item.account_id,
       name: item.name,
+      balance: item.current_balance ?? 0,
       displayType: 'عميل',
       badgeClass: 'bg-blue-950/40 text-blue-400 border border-blue-900/50',
     })
@@ -313,6 +335,7 @@ const unifiedSubLedgers = computed(() => {
         type: 'designer',
         account_id: designersAccount.value?.id || '',
         name: item.full_name,
+        balance: item.current_balance ?? 0,
         displayType: 'مصمم',
         badgeClass: 'bg-purple-950/40 text-purple-400 border border-purple-900/50',
       })
@@ -326,6 +349,7 @@ const unifiedSubLedgers = computed(() => {
       type: 'bank',
       account_id: item.account_id,
       name: item.name,
+      balance: item.current_balance ?? 0,
       displayType: 'بنك',
       badgeClass: 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/50',
     })
@@ -338,6 +362,7 @@ const unifiedSubLedgers = computed(() => {
       type: 'treasury',
       account_id: item.account_id,
       name: item.name,
+      balance: item.current_balance ?? 0,
       displayType: 'خزنة',
       badgeClass: 'bg-cyan-950/40 text-cyan-400 border border-cyan-900/50',
     })
@@ -356,6 +381,15 @@ const filteredSubLedgers = computed(() => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
     return matchesTab && matchesSearch
   })
+})
+
+// تتبع ورصد الرصيد الحالي للكيان المختار لعرضه بشكل فوري أسفل حقل الاختيار
+const currentSelectedBalance = computed(() => {
+  if (!props.subLedgerType || !props.subLedgerId) return null
+  const selected = unifiedSubLedgers.value.find(
+    (item) => item.type === props.subLedgerType && item.id == props.subLedgerId,
+  )
+  return selected ? selected.balance : null
 })
 
 const toggleDropdown = () => {

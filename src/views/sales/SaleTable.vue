@@ -1,4 +1,3 @@
-<!---src\views\sales\SaleTable.vue--->
 <template>
   <AppCard>
     <AppTable
@@ -105,6 +104,23 @@
 
       <template #cell-actions="{ item }">
         <div class="flex items-center justify-end space-x-1 space-x-reverse" @click.stop>
+          <!-- زر إجراء مردود مبيعات جديد: يظهر فقط إذا كان نوع المستند فاتورة مبيعات أصلية ونشطة -->
+          <button
+            v-if="item.invoice_type === 'sale'"
+            @click="$emit('return-sale', item)"
+            class="p-1.5 text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors"
+            title="إصدار مستند مردود مبيعات لهذه الفاتورة"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+              />
+            </svg>
+          </button>
+
           <button
             @click="$emit('print-sale', item)"
             class="p-1.5 text-indigo-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors"
@@ -170,16 +186,16 @@ defineProps({
   loading: { type: Boolean, default: false },
 })
 
-// تم حقن 'print-sale' رسمياً داخل قائمة الـ Emits
-defineEmits(['page-change', 'edit-sale', 'delete-sale', 'row-clicked', 'print-sale'])
+// تسجيل حدث return-sale رسمياً لتمرير الفاتورة المختارة للأعلى
+defineEmits(['page-change', 'edit-sale', 'delete-sale', 'row-clicked', 'print-sale', 'return-sale'])
 
 const tableHeaders = computed(() => [
   { key: 'id', label: 'المعرف المالي' },
   { key: 'invoice_info', label: 'طبيعة وتاريخ السند' },
   { key: 'entities', label: 'الجهات ذات الصلة' },
-  { key: 'sale_type', label: 'نوع البيع', class: 'text-center' }, // <- أضف هذا
+  { key: 'sale_type', label: 'نوع البيع', class: 'text-center' },
   { key: 'payment_type', label: 'طريقة الدفع' },
   { key: 'financials', label: 'الحساب المالي والتدقيق' },
-  { key: 'actions', label: 'إجراءات تخصصية', class: 'text-left min-w-[90px]' },
+  { key: 'actions', label: 'إجراءات تخصصية', class: 'text-left min-w-[110px]' },
 ])
 </script>

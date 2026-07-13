@@ -17,6 +17,9 @@ export function useSaleFormLogic() {
 
   const isEdit = computed(() => !!route.params.id)
 
+  // خاصية جديدة لتحديد ما إذا كانت الشاشة مفتوحة لإنشاء مردود من فاتورة مباعة
+  const isReturnFromInvoice = computed(() => !!route.query.return_from)
+
   const form = ref({
     invoice_type: 'sale',
     parent_id: null,
@@ -229,7 +232,7 @@ export function useSaleFormLogic() {
     }
   }
 
-  // [إضافة ماليّة]: حساب إجمالي أمتار التصميم للمقاسات التي تم تعليمها بعلامة الصح فقط
+  // حساب إجمالي أمتار التصميم للمقاسات التي تم تعليمها بعلامة الصح فقط
   const totalDesignArea = computed(() => {
     return items.value.reduce((sum, row) => {
       if (row.is_dimensional && row.is_designed) {
@@ -242,7 +245,7 @@ export function useSaleFormLogic() {
     }, 0)
   })
 
-  // [إضافة ماليّة]: مراقبة المساحة وسعر المتر لتوليد قيمة عمولة المصمم لحظياً وبدون ترقيع
+  // مراقبة المساحة وسعر المتر لتوليد قيمة عمولة المصمم لحظياً وبدون ترقيع
   watch(
     () => [totalDesignArea.value, form.value.designer_meter_price],
     ([area, price]) => {
@@ -331,6 +334,67 @@ export function useSaleFormLogic() {
           await itemStore.fetchItems(1, { is_active: 1, store_id: cur.store_id, all: true })
         }
       }
+    } else if (route.query.return_from) {
+      // [وضعية المردود التلقائي]: سحب الفاتورة الأصلية وإعادة شحن الحقول لإنشاء مستند المردود الجزئي
+      await saleStore.fetchSale(route.query.return_from)
+      if (saleStore.currentSale) {
+        const cur = saleStore.currentSale
+
+        form.value = {
+          invoice_type: 'return', // تغيير طبيعة نوع السند فوراً ليكون مردود
+          parent_id: cur.id, // حقن المعرف المرجعي لإلزام وتفعيل شروط الباك إند
+          store_id: cur.store_id || '',
+          treasury_id: cur.treasury_id || '',
+          bank_id: cur.bank_id || '',
+          customer_id: cur.customer_id,
+          invoice_date: new Date().toISOString().substr(0, 10),
+          payment_type: cur.payment_type,
+          discount_amount: 0, // تصفير أولي لتهيئة الحسابات النسبية للسطور المعاد إدخالها
+          tax_amount: 0,
+          designer_id: cur.designer_id || '',
+          designer_meter_price: cur.designer_meter_price || 0,
+          design_commission: 0,
+          sale_type: cur.sale_type || 'indoor',
+          customer_name_text: cur.customer_name_text || null,
+          notes: `مردود مبيعات تلقائي ناتج عن الفاتورة المرجعية رقم: ${cur.invoice_number || cur.id}`,
+        }
+
+        // نسخ عناصر وأسطر الفاتورة لتنزيلها كاملة مع سحب المعرفات التعديلية الخاصة بالسطور لتهيئتها كحركة وارد جديدة
+        items.value = cur.items.map((it) => {
+          return {
+            item_id_display: it.item_id ? `PRD-${it.item_id}` : '',
+            item_name: it.item_name || '',
+            item_id: it.item_id,
+            item_unit_id: it.item_unit_id,
+            is_dimensional: !!it.is_dimensional,
+            length: it.length,
+            width: it.width,
+            dimension_unit: 'm',
+            is_designed: !!it.is_designed,
+            quantity: it.quantity, // تنزل الكمية الأصلية كاملة وللمحاسب الحق في تقليصها أو حذف السطر
+            unit_price: it.unit_price,
+            grand_total: it.grand_total,
+            available_units: it.available_units || [],
+            base_stock: parseFloat(it.current_stock) || 0,
+            _flashing: false,
+          }
+        })
+
+        items.value.forEach((row) => {
+          if (!row.is_dimensional) {
+            row.total_sqm = null
+            return
+          }
+          let l = parseFloat(row.length) || 0
+          let w = parseFloat(row.width) || 0
+          const q = parseFloat(row.quantity) || 0
+          row.total_sqm = l * w * q ? parseFloat((l * w * q).toFixed(2)) : 0
+        })
+
+        if (cur.store_id) {
+          await itemStore.fetchItems(1, { is_active: 1, store_id: cur.store_id, all: true })
+        }
+      }
     } else {
       if (authStore.user) {
         form.value.store_id = authStore.user.store_id || ''
@@ -381,7 +445,11 @@ export function useSaleFormLogic() {
         toast.success('تم تحديث ومزامنة مستند المبيعات بنجاح.')
       } else {
         await saleStore.createSale(finalPayload)
-        toast.success('تم ترحيل فاتورة المبيعات واقتطاع الأرصدة بنجاح.')
+        toast.success(
+          form.value.invoice_type === 'return'
+            ? 'تم ترحيل مستند مردود المبيعات وإدخال الأرصدة للمخازن بنجاح.'
+            : 'تم ترحيل فاتورة المبيعات واقتطاع الأرصدة بنجاح.',
+        )
       }
       router.push('/app/sales')
     } catch {
@@ -414,6 +482,7 @@ export function useSaleFormLogic() {
 
   return {
     isEdit,
+    isReturnFromInvoice,
     form,
     items,
     detailSchema,
