@@ -4,79 +4,79 @@ import backupService from '@/services/backupService'
 export const useBackupStore = defineStore('backup', {
   state: () => ({
     backups: [],
-    loading: false, // لحالة جلب القائمة
-    creating: false, // لحالة زر "إنشاء نسخة"
-    // --- الإضافة الجديدة ---
-    // لتتبع تقدم التحميل لملف معين
+    loading: false, // مؤشر حالة جلب قائمة الملفات
+    creating: false, // مؤشر حالة زر "إنشاء نسخة احتياطية"
+    restoring: false, // مؤشر حالة الاستعادة الحساسة (لقفل الشاشة والعمليات الحسابية)
     downloadProgress: {
-      fileName: null, // اسم الملف الذي يتم تحميله حالياً
-      percentage: 0, // نسبة التحميل
+      fileName: null, // اسم الملف الذي يتم تنزيله حالياً
+      percentage: 0, // نسبة مئوية لتقدم التنزيل الفعلي
     },
-    // --------------------
   }),
 
   actions: {
-    // جلب البيانات
+    // جلب قائمة ملفات الباك اب المتوفرة أونلاين
     async fetchBackups() {
       this.loading = true
       try {
         const response = await backupService.getAll()
         this.backups = response.data.data
       } catch (error) {
-        console.error('Failed to fetch backups', error)
+        console.error('فشل في جلب قائمة النسخ الاحتياطية:', error)
         throw error
       } finally {
         this.loading = false
       }
     },
 
-    // إنشاء نسخة جديدة
+    // طلب إنشاء نسخة احتياطية فورية يدوياً
     async createBackup() {
       this.creating = true
       try {
         await backupService.create()
-        // تحديث القائمة فوراً بعد الإنشاء الناجح
+        // تحديث القائمة فوراً لعرض الملف الجديد في الواجهة
         await this.fetchBackups()
       } catch (error) {
-        console.error('Failed to create backup', error)
+        console.error('فشل إنشاء نسخة احتياطية يدوية:', error)
         throw error
       } finally {
         this.creating = false
       }
     },
 
-    // حذف نسخة
+    // حذف نسخة احتياطية من السيرفر وتحديث القائمة محلياً
     async deleteBackup(fileName) {
       try {
         await backupService.delete(fileName)
-        // حذف العنصر محلياً لتحديث الواجهة بسرعة
+        // تنظيف الواجهة فوراً بحذف الملف المحذوف دون الحاجة لإعادة تحميل الصفحة
         this.backups = this.backups.filter((item) => item.name !== fileName)
       } catch (error) {
-        console.error('Failed to delete backup', error)
+        console.error('فشل حذف ملف النسخة الاحتياطية:', error)
         throw error
       }
     },
 
-    // --- تعديل دالة التحميل ---
+    // تحميل ملف الباك اب بآلية الروابط الموقعة زمنياً الآمنة
     async downloadBackup(fileName) {
-      // 1. تفعيل حالة التحميل
       this.downloadProgress.fileName = fileName
       this.downloadProgress.percentage = 0
 
       try {
-        // 2. تعريف دالة لتحديث التقدم
+        // 1. طلب الرابط الموقّع والآمن من الـ API
+        const urlResponse = await backupService.getDownloadUrl(fileName)
+        const signedUrl = urlResponse.data.download_url
+
+        // 2. تتبع تقدم التحميل الفعلي
         const onProgress = (progressEvent) => {
-          // التأكد من وجود progressEvent.total لتجنب القسمة على صفر
           if (progressEvent.total > 0) {
             const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
             this.downloadProgress.percentage = percentCompleted
           }
         }
 
-        // 3. تمرير الدالة إلى السيرفس
-        const response = await backupService.download(fileName, onProgress)
+        // 3. تنزيل الملف الفعلي عبر الرابط الموقع المشفر
+        const response = await backupService.download(signedUrl, onProgress)
 
-        // إنشاء رابط وهمي في الذاكرة لتنزيل الملف
+        // 4. معالجة وتدشين تحميل الملف داخل متصفح المستخدم
         const url = window.URL.createObjectURL(new Blob([response.data]))
         const link = document.createElement('a')
         link.href = url
@@ -84,16 +84,34 @@ export const useBackupStore = defineStore('backup', {
         document.body.appendChild(link)
         link.click()
 
-        // تنظيف الذاكرة
+        // تنظيف وحذف العناصر المؤقتة من الذاكرة لعدم حدوث تسريب ميموري بالمتصفح
         link.remove()
         window.URL.revokeObjectURL(url)
       } catch (error) {
-        console.error('Failed to download backup', error)
+        console.error('فشل تحميل النسخة الاحتياطية:', error)
         throw error
       } finally {
-        // 4. إعادة تعيين حالة التحميل بعد الانتهاء أو الفشل
+        // إعادة تهيئة تتبع التحميل
         this.downloadProgress.fileName = null
         this.downloadProgress.percentage = 0
+      }
+    },
+
+    // استعادة قاعدة البيانات مع تفعيل حظر للواجهات لضمان عدم حدوث تشوه للقيود المالية الحالية
+    async restoreBackup(fileName) {
+      this.restoring = true
+      try {
+        const response = await backupService.restore(fileName)
+
+        // إعادة جلب القائمة لتحديث الحركات وقفل المزامنة
+        await this.fetchBackups()
+
+        return response.data
+      } catch (error) {
+        console.error('فشلت عملية استعادة قاعدة البيانات من الستور:', error)
+        throw error
+      } finally {
+        this.restoring = false
       }
     },
   },

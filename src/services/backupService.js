@@ -3,17 +3,17 @@ import apiClient from './apiClient'
 const resource = '/backups'
 
 export default {
-  // جلب كل النسخ
+  // جلب كل النسخ من السيرفر
   getAll() {
     return apiClient.get(resource)
   },
 
-  // إنشاء نسخة جديدة
+  // إنشاء نسخة احتياطية جديدة يدوياً
   create() {
     return apiClient.post(resource)
   },
 
-  // حذف نسخة (نرسل اسم الملف كـ parameter)
+  // حذف نسخة احتياطية نهائياً من السيرفر
   delete(fileName) {
     return apiClient.delete(resource, {
       params: {
@@ -22,18 +22,27 @@ export default {
     })
   },
 
-  // --- تعديل دالة التحميل ---
-  // الآن تقبل دالة onProgress كمعامل ثاني اختياري
-  download(fileName, onProgress) {
-    return apiClient.get(`${resource}/download`, {
+  // جلب رابط تحميل مؤقت وموقع برمجياً (صالح لمدة دقيقتين فقط) لتأمين ملفات الباك اب
+  getDownloadUrl(fileName) {
+    return apiClient.get(`${resource}/download-url`, {
       params: {
         file_name: fileName,
       },
-      responseType: 'blob', // ضروري لكي يفهم المتصفح أنه ملف وليس نص JSON
+    })
+  },
 
-      // تمرير الدالة مباشرة إلى إعدادات axios
-      // إذا كانت onProgress غير معرفة (undefined)، سيتجاهلها axios ببساطة
+  // التحميل الفعلي للملف باستخدام الرابط الموقع لحماية السيرفر من ثغرات التحميل المباشر
+  download(signedUrl, onProgress) {
+    return apiClient.get(signedUrl, {
+      responseType: 'blob', // ضروري لمعالجة الملف المسترجع كـ Blob
       onDownloadProgress: onProgress,
+    })
+  },
+
+  // طلب استعادة قاعدة البيانات من نسخة معينة مع تفعيل نظام الطوارئ للتراجع التلقائي في السيرفر
+  restore(fileName) {
+    return apiClient.post(`${resource}/restore`, {
+      file_name: fileName,
     })
   },
 }
