@@ -25,6 +25,14 @@
             <!-- [مُعدَّل] استخدم شعار مشروعك وعنوانه -->
             <img src="/MainLogo2.png" alt="Project Logo" class="logo-main mx-auto mb-4" />
             <h1 class="text-4xl font-bold text-white tracking-wider">باندا للحسابات</h1>
+            <!-- شارة اسم الفرع -->
+            <div
+              v-if="branchName"
+              class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-semibold backdrop-blur-sm"
+            >
+              <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+              {{ branchName }}
+            </div>
             <p class="mt-2 text-slate-300 opacity-80 text-lg"></p>
           </div>
 
@@ -103,6 +111,8 @@ import { ref, reactive } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useRouter } from 'vue-router'
 
+// قراءة اسم الفرع من ملف .env
+const branchName = import.meta.env.VITE_BRANCH_NAME || ''
 // --- منطق تأثير اللمعان التفاعلي (بدون تغيير ) ---
 const card = ref(null)
 const onMouseMove = (event) => {
