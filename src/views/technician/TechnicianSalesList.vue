@@ -1,4 +1,4 @@
-<!--src\views\technician\TechnicianSalesList.vue--->
+<!--src\views\technician\TechnicianSaleList.vue--->
 <template>
   <div class="space-y-6">
     <div class="flex justify-between items-center mb-6 text-right" dir="rtl">
@@ -14,56 +14,14 @@
       </div>
     </div>
 
-    <!-- شريط الفلاتر والبحث السريع -->
-    <div
-      class="p-3 bg-surface-card rounded-lg border border-surface-border shadow-sm grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-right"
-      dir="rtl"
-    >
-      <div class="flex flex-col space-y-1">
-        <label class="text-[11px] font-black text-text-secondary">البحث السريع</label>
-        <input
-          type="text"
-          v-model="searchQuery"
-          @input="onSearch"
-          placeholder="رقم الفاتورة، ملاحظات التشغيل..."
-          class="block w-full px-3 py-1.5 border border-surface-border/70 rounded-md bg-surface-ground text-text-primary text-xs font-semibold focus:border-amber-500 outline-none transition-all focus:ring-1 focus:ring-amber-500/20"
-        />
-      </div>
-
-      <div class="flex flex-col space-y-1">
-        <label class="text-[11px] font-black text-text-secondary">مستودع الصرف والمواد</label>
-        <select
-          v-model="storeFilter"
-          @change="handlePageChange(1)"
-          style="color-scheme: dark"
-          class="block w-full px-2 py-1.5 border border-surface-border/80 rounded-md bg-surface-ground text-text-primary focus:border-amber-500 text-xs font-bold outline-none transition-all appearance-none cursor-pointer focus:ring-1 focus:ring-amber-500/20"
-        >
-          <option value="">كل المخازن المتاحة</option>
-          <option v-for="store in storeStore.stores" :key="store.id" :value="store.id">
-            {{ store.name }}
-          </option>
-        </select>
-      </div>
-
-      <div class="flex flex-col space-y-1">
-        <label class="text-[11px] font-black text-text-secondary">حساب العميل المعني</label>
-        <select
-          v-model="customerFilter"
-          @change="handlePageChange(1)"
-          style="color-scheme: dark"
-          class="block w-full px-2 py-1.5 border border-surface-border/80 rounded-md bg-surface-ground text-text-primary focus:border-amber-500 text-xs font-bold outline-none transition-all appearance-none cursor-pointer focus:ring-1 focus:ring-amber-500/20"
-        >
-          <option value="">كل العملاء</option>
-          <option
-            v-for="customer in customerStore.customers"
-            :key="customer.id"
-            :value="customer.id"
-          >
-            {{ customer.name }}
-          </option>
-        </select>
-      </div>
-    </div>
+    <!-- شريط الفلاتر المطور للشاشة -->
+    <TechnicianSaleFilters
+      v-model:searchQuery="searchQuery"
+      v-model:storeFilter="storeFilter"
+      v-model:customerFilter="customerFilter"
+      v-model:fromDateFilter="fromDateFilter"
+      v-model:toDateFilter="toDateFilter"
+    />
 
     <!-- جدول البيانات المطور -->
     <AppCard>
@@ -171,34 +129,36 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useTechnicianSaleStore } from '@/stores/technicianSaleStore'
-import { useStoreStore } from '@/stores/storeStore'
-import { useCustomerStore } from '@/stores/customerStore'
 import { storeToRefs } from 'pinia'
 import { useToast } from 'vue-toastification'
 
 import AppCard from '@/components/ui/AppCard.vue'
 import AppTable from '@/components/ui/AppTable.vue'
 import AppPagination from '@/components/ui/AppPagination.vue'
+import TechnicianSaleFilters from '@/views/technician/TechnicianSaleFilters.vue'
 
+const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 
 const technicianSaleStore = useTechnicianSaleStore()
-const storeStore = useStoreStore()
-const customerStore = useCustomerStore()
-
 const { sales, loading, pagination } = storeToRefs(technicianSaleStore)
 
-const searchQuery = ref('')
-const storeFilter = ref('')
-const customerFilter = ref('')
-let searchTimeout = null
-let autoRefreshInterval = null // [إضافة برمجية]: متغير لحفظ مؤشر التحديث التلقائي الدوري
+// قراءة قيم الفلاتر ورقم الصفحة مباشرة من الـ URL للثبات عند الرجوع
+const searchQuery = ref(route.query.search || '')
+const storeFilter = ref(route.query.store_id || '')
+const customerFilter = ref(route.query.customer_id || '')
+const fromDateFilter = ref(route.query.from_date || '')
+const toDateFilter = ref(route.query.to_date || '')
+const initialPage = Number(route.query.page) || 1
 
-// العناوين المعزولة والمجرّدة تماماً من الحسابات المالية الحساسة لصالح الفني
+let searchTimeout = null
+let autoRefreshInterval = null
+
+// العناوين المجرّدة من البيانات المالية الحساسة لصالح الفني
 const tableHeaders = computed(() => [
   { key: 'id', label: 'المعرف الرقمي' },
   { key: 'invoice_info', label: 'حالة وتاريخ السند' },
@@ -207,44 +167,63 @@ const tableHeaders = computed(() => [
   { key: 'actions', label: 'إجراءات تخصصية', class: 'text-left min-w-[120px]' },
 ])
 
-const onSearch = () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    handlePageChange(1)
-  }, 500)
-}
-
+// دالة جلب البيانات وتعديل الـ Query Params بالمتصفح
 const handlePageChange = (page = 1) => {
   const filters = {
     search: searchQuery.value,
     store_id: storeFilter.value,
     customer_id: customerFilter.value,
+    from_date: fromDateFilter.value,
+    to_date: toDateFilter.value,
   }
+
+  // حفظ الفلاتر في رابط الصفحة
+  router.replace({
+    query: {
+      ...(page > 1 ? { page } : {}),
+      ...(searchQuery.value ? { search: searchQuery.value } : {}),
+      ...(storeFilter.value ? { store_id: storeFilter.value } : {}),
+      ...(customerFilter.value ? { customer_id: customerFilter.value } : {}),
+      ...(fromDateFilter.value ? { from_date: fromDateFilter.value } : {}),
+      ...(toDateFilter.value ? { to_date: toDateFilter.value } : {}),
+    },
+  })
 
   technicianSaleStore.fetchSales(page, filters).catch(() => {
     toast.error('فشل النظام في جلب فواتير ورشة التنفيذ المحدثة من الخادم.')
   })
 }
 
-// [إضافة برمجية]: دالة التحديث الدوري الصامتة مع إطلاق إشعار ذكي فور رصد فاتورة جديدة تماماً في الورشة
+// مراقبة تغييرات البحث بالصوت والملاحظات مع Debounce
+watch(searchQuery, () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    handlePageChange(1)
+  }, 500)
+})
+
+// مراقبة الفلاتر المباشرة (المستودع، العميل، التواريخ) لإعادة الجلب فور التغيير
+watch([storeFilter, customerFilter, fromDateFilter, toDateFilter], () => {
+  handlePageChange(1)
+})
+
+// دالة التحديث الدوري الصامت كل 5 دقائق
 const runSilentAutoRefresh = async () => {
   const filters = {
     search: searchQuery.value,
     store_id: storeFilter.value,
     customer_id: customerFilter.value,
+    from_date: fromDateFilter.value,
+    to_date: toDateFilter.value,
   }
 
   try {
-    // 1. التقاط معرف الفاتورة الأعلى الحالية قبل التحديث للمقارنة الرقمية العادلة
     const previousTopInvoiceId = sales.value && sales.value.length > 0 ? sales.value[0].id : null
 
-    // 2. طلب جلب البيانات صامتاً من مخزن البيانات
     await technicianSaleStore.fetchSales(pagination.value.current_page || 1, filters)
 
-    // 3. التقاط معرف الفاتورة الأعلى الحالية بعد التحديث
     const currentTopInvoiceId = sales.value && sales.value.length > 0 ? sales.value[0].id : null
 
-    // 4. إذا كانت هناك فاتورة جديدة دخلت ورشة التنفيذ برقم معرف أكبر، أطلق تنبيهاً فورياً للعامل
     if (previousTopInvoiceId && currentTopInvoiceId && currentTopInvoiceId > previousTopInvoiceId) {
       toast.info('🔔 تنبيه: تم استقبال فاتورة إنتاج جديدة قيد الانتظار بالورشة!', {
         timeout: 6000,
@@ -258,22 +237,15 @@ const runSilentAutoRefresh = async () => {
   }
 }
 
-onMounted(async () => {
-  // شحن البيانات لأول مرة عند تشغيل الشاشة
-  handlePageChange(1)
+onMounted(() => {
+  // شحن البيانات بالصفحة والفلاتر الأولية
+  handlePageChange(initialPage)
 
-  // شحن قوائم التصفية المساعدة
-  await Promise.all([
-    storeStore.fetchStores(1, { is_active: 1 }),
-    customerStore.fetchCustomers(1, { is_active: 1 }),
-  ])
-
-  // [إضافة برمجية]: تشغيل آلية الـ Polling الدوري لتحديث الشاشة تلقائياً كل 15 ثانية (15000 ملي ثانية)
-  autoRefreshInterval = setInterval(runSilentAutoRefresh, 15000)
+  // تشغيل آلية التحديث كل 5 دقائق (300,000 ملي ثانية)
+  autoRefreshInterval = setInterval(runSilentAutoRefresh, 300000)
 })
 
 onUnmounted(() => {
-  // [إضافة برمجية]: تدمير وتنظيف المؤقت الدوري نهائياً عند مغادرة الصفحة حماية لأداء المتصفح وسرعته
   if (autoRefreshInterval) {
     clearInterval(autoRefreshInterval)
   }
