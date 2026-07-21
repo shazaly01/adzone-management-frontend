@@ -1,3 +1,4 @@
+<!--src\views\sales\SaleFilters.vue--->
 <template>
   <div
     class="p-4 bg-surface-card rounded-lg border border-surface-border shadow-sm space-y-4 text-right"

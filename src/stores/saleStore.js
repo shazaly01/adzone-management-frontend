@@ -1,4 +1,3 @@
-//src\stores\saleStore.js
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import saleService from '@/services/saleService'
@@ -12,21 +11,41 @@ export const useSaleStore = defineStore('sale', () => {
   const error = ref(null)
   const validationErrors = ref(null)
 
+  // حالة التصفح والفلاتر للحفاظ على موقع المستخدم
+  const currentPage = ref(1)
+  const filters = ref({
+    search: '',
+    invoice_type: '',
+    store_id: '',
+    customer_id: '',
+    from_date: '',
+    to_date: '',
+  })
+
   // --- Helper to clean filters ---
-  function cleanFilters(filters) {
-    return Object.keys(filters).reduce((acc, key) => {
-      if (filters[key] !== null && filters[key] !== '') {
-        acc[key] = filters[key]
+  function cleanFilters(filtersToClean) {
+    return Object.keys(filtersToClean).reduce((acc, key) => {
+      if (filtersToClean[key] !== null && filtersToClean[key] !== '') {
+        acc[key] = filtersToClean[key]
       }
       return acc
     }, {})
   }
 
   // --- Actions ---
-  async function fetchSales(page = 1, filters = {}) {
+  async function fetchSales(page = currentPage.value, filterParams = null) {
     loading.value = true
     error.value = null
-    const cleaned = cleanFilters(filters)
+
+    // تحديث رقم الصفحة الحالية
+    currentPage.value = page
+
+    // تحديث الفلاتر المجهزة في حال تمرير فلاتر جديدة
+    if (filterParams !== null) {
+      filters.value = { ...filters.value, ...filterParams }
+    }
+
+    const cleaned = cleanFilters(filters.value)
     try {
       const response = await saleService.get(page, cleaned)
       sales.value = response.data.data
@@ -134,6 +153,8 @@ export const useSaleStore = defineStore('sale', () => {
     loading,
     error,
     validationErrors,
+    currentPage,
+    filters,
     fetchSales,
     fetchSale,
     createSale,

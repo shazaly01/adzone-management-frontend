@@ -67,14 +67,15 @@ const saleStore = useSaleStore()
 const storeStore = useStoreStore()
 const customerStore = useCustomerStore()
 
-const { sales, loading, pagination } = storeToRefs(saleStore)
+const { sales, loading, pagination, currentPage, filters } = storeToRefs(saleStore)
 
-const searchQuery = ref('')
-const invoiceTypeFilter = ref('')
-const storeFilter = ref('')
-const customerFilter = ref('')
-const fromDateFilter = ref('')
-const toDateFilter = ref('')
+// تهيئة القيم المحلية من الـ Store للحفاظ على القيم المحددة سابقاً
+const searchQuery = ref(filters.value.search || '')
+const invoiceTypeFilter = ref(filters.value.invoice_type || '')
+const storeFilter = ref(filters.value.store_id || '')
+const customerFilter = ref(filters.value.customer_id || '')
+const fromDateFilter = ref(filters.value.from_date || '')
+const toDateFilter = ref(filters.value.to_date || '')
 let searchTimeout = null
 
 const onSearch = () => {
@@ -84,8 +85,8 @@ const onSearch = () => {
   }, 500)
 }
 
-const handlePageChange = (page = 1) => {
-  const filters = {
+const handlePageChange = (page = currentPage.value) => {
+  const currentFilters = {
     search: searchQuery.value,
     invoice_type: invoiceTypeFilter.value,
     store_id: storeFilter.value,
@@ -94,13 +95,14 @@ const handlePageChange = (page = 1) => {
     to_date: toDateFilter.value,
   }
 
-  saleStore.fetchSales(page, filters).catch(() => {
+  saleStore.fetchSales(page, currentFilters).catch(() => {
     toast.error('فشل النظام في جلب مستندات المبيعات المحدثة من الخادم.')
   })
 }
 
 onMounted(async () => {
-  handlePageChange(1)
+  // طلب الصفحة المحفوظة في الـ Store بدلاً من فرض الصفحة الأولى
+  handlePageChange(currentPage.value)
 
   await Promise.all([
     storeStore.fetchStores(1, { is_active: 1 }),

@@ -1,3 +1,4 @@
+<!--src\views\sales\components\SaleFooter.vue--->
 <template>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-right font-sans" dir="rtl">
     <div

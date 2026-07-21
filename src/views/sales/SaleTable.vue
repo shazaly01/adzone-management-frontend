@@ -1,3 +1,4 @@
+<!---src\views\sales\SaleTable.vue--->
 <template>
   <AppCard>
     <AppTable
